@@ -87,11 +87,14 @@ function ScrollCamera() {
 }
 
 function SkyBackground() {
-  const { scene, gl } = useThree();
-  const [isLoaded, setIsLoaded] = useState(false);
+  const { scene } = useThree();
+  const textureRef = useRef<THREE.Texture | null>(null);
+  const previousBackground = useRef<THREE.Texture | THREE.Color | null>(null);
+  const previousEnvironment = useRef<THREE.Texture | null>(null);
 
   useEffect(() => {
     let isMounted = true;
+    let abortController: AbortController | null = null;
 
     const loadEXR = async () => {
       try {
@@ -99,30 +102,38 @@ function SkyBackground() {
         const { EXRLoader } = await import('three/examples/jsm/loaders/EXRLoader.js');
         const loader = new EXRLoader();
 
+        // Store previous values for restoration
+        previousBackground.current = scene.background;
+        previousEnvironment.current = scene.environment;
+
         loader.load(
           '/media/the_sky_is_on_fire_4k.exr',
           (texture) => {
-            if (!isMounted) return;
+            if (!isMounted) {
+              // If component unmounted during load, dispose immediately
+              texture.dispose();
+              return;
+            }
 
             texture.mapping = THREE.EquirectangularReflectionMapping;
             texture.colorSpace = THREE.SRGBColorSpace;
             scene.background = texture;
             scene.environment = texture;
-            setIsLoaded(true);
+            textureRef.current = texture;
           },
           undefined,
           (error) => {
-            console.warn('Failed to load EXR background:', error);
-            // Fallback: use a simple dark color
             if (isMounted) {
+              console.warn('Failed to load EXR background:', error);
+              // Fallback: use a simple dark color
               scene.background = new THREE.Color(0x050508);
             }
           }
         );
       } catch (error) {
-        console.warn('EXRLoader not available:', error);
-        // Fallback to dark background
         if (isMounted) {
+          console.warn('EXRLoader not available:', error);
+          // Fallback to dark background
           scene.background = new THREE.Color(0x050508);
         }
       }
@@ -132,6 +143,25 @@ function SkyBackground() {
 
     return () => {
       isMounted = false;
+
+      // Cleanup: dispose texture and restore previous background/environment
+      if (textureRef.current) {
+        textureRef.current.dispose();
+        textureRef.current = null;
+      }
+
+      // Restore previous scene state
+      if (previousBackground.current) {
+        scene.background = previousBackground.current;
+      } else {
+        scene.background = null;
+      }
+
+      if (previousEnvironment.current) {
+        scene.environment = previousEnvironment.current;
+      } else {
+        scene.environment = null;
+      }
     };
   }, [scene]);
 
