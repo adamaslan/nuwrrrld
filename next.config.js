@@ -22,10 +22,10 @@ const nextConfig = {
   webpack: (config, { isServer }) => {
     config.externals = [...(config.externals || []), { canvas: 'canvas' }];
 
-    // Tree-shake Three.js
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      'three': 'three/src/Three.js',
+    // Allow importing from three/examples
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
     };
 
     // Optimize chunks

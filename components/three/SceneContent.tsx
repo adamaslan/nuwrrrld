@@ -2,8 +2,6 @@
 
 import { useRef, useMemo, useEffect, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { useLoader } from '@react-three/fiber';
-import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js';
 import * as THREE from 'three';
 import Lighting from './Lighting';
 import Environment from './Environment';
@@ -90,21 +88,52 @@ function ScrollCamera() {
 
 function SkyBackground() {
   const { scene, gl } = useThree();
-  const exrTexture = useLoader(EXRLoader, '/media/the_sky_is_on_fire_4k.exr');
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    if (exrTexture) {
-      exrTexture.mapping = THREE.EquirectangularReflectionMapping;
-      exrTexture.colorSpace = THREE.SRGBColorSpace;
-      scene.background = exrTexture;
-      scene.environment = exrTexture;
-    }
+    let isMounted = true;
+
+    const loadEXR = async () => {
+      try {
+        // Dynamically import EXRLoader to avoid build issues
+        const { EXRLoader } = await import('three/examples/jsm/loaders/EXRLoader.js');
+        const loader = new EXRLoader();
+
+        loader.load(
+          '/media/the_sky_is_on_fire_4k.exr',
+          (texture) => {
+            if (!isMounted) return;
+
+            texture.mapping = THREE.EquirectangularReflectionMapping;
+            texture.colorSpace = THREE.SRGBColorSpace;
+            scene.background = texture;
+            scene.environment = texture;
+            setIsLoaded(true);
+          },
+          undefined,
+          (error) => {
+            console.warn('Failed to load EXR background:', error);
+            // Fallback: use a simple dark color
+            if (isMounted) {
+              scene.background = new THREE.Color(0x050508);
+            }
+          }
+        );
+      } catch (error) {
+        console.warn('EXRLoader not available:', error);
+        // Fallback to dark background
+        if (isMounted) {
+          scene.background = new THREE.Color(0x050508);
+        }
+      }
+    };
+
+    loadEXR();
 
     return () => {
-      scene.background = null;
-      scene.environment = null;
+      isMounted = false;
     };
-  }, [exrTexture, scene, gl]);
+  }, [scene]);
 
   return null;
 }
