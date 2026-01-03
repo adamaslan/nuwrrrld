@@ -24,31 +24,35 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Fixed 3D scene - always fullscreen behind content */
-.scene-fixed {
+/* Fullscreen 3D scene with orbit controls */
+.scene-fullscreen {
   position: fixed;
   inset: 0;
-  z-index: 0;
+  overflow: hidden;
 }
 
-/* Scrollable container - drives camera movement */
-.scroll-container {
-  position: relative;
-  z-index: 1;
-  min-height: 300vh; /* Creates scroll distance for camera travel */
-  display: flex;
-  flex-direction: column;
-  pointer-events: none; /* Allow clicks through to 3D scene */
+/* Header overlay - floats above 3D scene */
+.site-header-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  padding: 1rem;
+  pointer-events: none;
+  z-index: 10;
 }
 
-.scroll-container > * {
-  pointer-events: auto; /* Re-enable for actual content */
-}
-
-/* Scroll spacer - invisible element that creates scroll height */
-.scroll-spacer {
-  flex: 1;
-  min-height: 280vh;
+/* Footer overlay - floats above 3D scene */
+.site-footer-overlay {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  padding: 1rem;
+  pointer-events: none;
+  z-index: 10;
 }
 
 /* Legacy page wrapper - kept for backwards compatibility */

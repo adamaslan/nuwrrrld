@@ -4,7 +4,6 @@ import { Canvas } from '@react-three/fiber';
 import { Suspense } from 'react';
 import SceneContent from './SceneContent';
 import PostProcessing from './PostProcessing';
-import { SCROLL_CONFIG } from '@/config/mediaConfig';
 
 export default function Scene() {
   return (
@@ -15,22 +14,21 @@ export default function Scene() {
         powerPreference: 'high-performance',
         stencil: false,
         depth: true,
-        preserveDrawingBuffer: true,
       }}
-      dpr={[1, 3]}
+      dpr={[1, 2]}
       camera={{
-        fov: 70,
+        fov: 60,
         near: 0.1,
         far: 300,
-        position: [0, SCROLL_CONFIG.startY, 14],
+        position: [0, 5, 25],
       }}
       style={{
         width: '100%',
         height: '100%',
-        touchAction: 'pan-y', // Allow vertical scrolling
+        touchAction: 'none',
       }}
     >
-      <fog attach="fog" args={['#1a0505', 40, 150]} />
+      <fog attach="fog" args={['#0a0510', 50, 200]} />
       <Suspense fallback={null}>
         <SceneContent />
         <PostProcessing />

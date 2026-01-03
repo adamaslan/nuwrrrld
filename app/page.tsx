@@ -8,25 +8,14 @@ const Scene = dynamic(() => import('@/components/three/Scene'), {
 
 export default function HomePage() {
   return (
-    <>
-      {/* Fixed 3D canvas background */}
-      <div className="scene-fixed">
-        <Scene />
-      </div>
-
-      {/* Scrollable content overlay */}
-      <main className="scroll-container">
-        <header className="site-header">
-          <h1 className="site-title">NUWRRRLD</h1>
-        </header>
-
-        {/* Scroll spacer for camera navigation */}
-        <div className="scroll-spacer" />
-
-        <footer className="site-footer">
-          <p className="footer-text">Scroll to explore</p>
-        </footer>
-      </main>
-    </>
+    <main className="scene-fullscreen">
+      <Scene />
+      <header className="site-header-overlay">
+        <h1 className="site-title">NUWRRRLD</h1>
+      </header>
+      <footer className="site-footer-overlay">
+        <p className="footer-text">Drag to orbit • Scroll to zoom</p>
+      </footer>
+    </main>
   );
 }
