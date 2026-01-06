@@ -83,40 +83,40 @@ function CityBuildings() {
       return x - Math.floor(x);
     };
 
-    // Left side buildings - narrowed from ±50 to ±35
-    for (let i = 0; i < 8; i++) {
+    // Left side buildings - reduced from 8 to 5
+    for (let i = 0; i < 5; i++) {
       const height = 25 + random(i) * 50;
       const width = 3 + random(i + 100) * 4;
       const depth = 3 + random(i + 200) * 4;
       b.push({
-        position: [-12 - i * 5 + random(i + 300) * 2, height / 2 - 2, -12 - random(i + 400) * 20] as [number, number, number],
+        position: [-12 - i * 6 + random(i + 300) * 2, height / 2 - 2, -12 - random(i + 400) * 20] as [number, number, number],
         size: [width, height, depth] as [number, number, number],
         windowColor: ['#00ffff', '#ff00ff', '#ffaa00', '#00ff88'][Math.floor(random(i + 500) * 4)],
-        hasAntenna: random(i + 600) > 0.5,
+        hasAntenna: random(i + 600) > 0.6,
       });
     }
-    // Right side buildings
-    for (let i = 0; i < 8; i++) {
+    // Right side buildings - reduced from 8 to 5
+    for (let i = 0; i < 5; i++) {
       const height = 25 + random(i + 1000) * 50;
       const width = 3 + random(i + 1100) * 4;
       const depth = 3 + random(i + 1200) * 4;
       b.push({
-        position: [12 + i * 5 + random(i + 1300) * 2, height / 2 - 2, -12 - random(i + 1400) * 20] as [number, number, number],
+        position: [12 + i * 6 + random(i + 1300) * 2, height / 2 - 2, -12 - random(i + 1400) * 20] as [number, number, number],
         size: [width, height, depth] as [number, number, number],
         windowColor: ['#00ffff', '#ff00ff', '#ffaa00', '#00ff88'][Math.floor(random(i + 1500) * 4)],
-        hasAntenna: random(i + 1600) > 0.5,
+        hasAntenna: random(i + 1600) > 0.6,
       });
     }
-    // Background mega-buildings - narrower spread
-    for (let i = 0; i < 10; i++) {
+    // Background mega-buildings - reduced from 10 to 6
+    for (let i = 0; i < 6; i++) {
       const height = 50 + random(i + 2000) * 70;
       const width = 5 + random(i + 2100) * 6;
       const depth = 5 + random(i + 2200) * 6;
       b.push({
-        position: [-35 + i * 7 + random(i + 2300) * 3, height / 2 - 2, -35 - random(i + 2400) * 15] as [number, number, number],
+        position: [-30 + i * 10 + random(i + 2300) * 3, height / 2 - 2, -35 - random(i + 2400) * 15] as [number, number, number],
         size: [width, height, depth] as [number, number, number],
         windowColor: ['#00ffff', '#ff00ff', '#ffaa00', '#00ff88'][Math.floor(random(i + 2500) * 4)],
-        hasAntenna: random(i + 2600) > 0.3,
+        hasAntenna: random(i + 2600) > 0.4,
       });
     }
     return b;
@@ -222,29 +222,18 @@ function CyberpunkBuilding({
       {hasAntenna && (
         <group position={[0, size[1] / 2, 0]}>
           <mesh>
-            <cylinderGeometry args={[0.08, 0.15, 5, 8]} />
+            <cylinderGeometry args={[0.08, 0.15, 5, 6]} />
             <meshStandardMaterial color="#1a1a28" metalness={0.95} roughness={0.2} />
           </mesh>
-          <pointLight
-            ref={antennaLightRef}
-            color="#ff0000"
-            intensity={0.5}
-            distance={15}
-            position={[0, 3, 0]}
-          />
+          {/* Removed point light - using emissive mesh instead for RAM savings */}
           <mesh position={[0, 2.8, 0]}>
-            <sphereGeometry args={[0.12, 8, 8]} />
+            <sphereGeometry args={[0.15, 6, 6]} />
             <meshBasicMaterial color="#ff0000" />
           </mesh>
         </group>
       )}
 
-      <pointLight
-        color={windowColor}
-        intensity={0.2}
-        distance={15}
-        position={[0, size[1] / 2 + 2, size[2] / 2]}
-      />
+      {/* Removed per-building point light for RAM optimization */}
     </group>
   );
 }
@@ -266,13 +255,11 @@ function NeonSigns() {
     }
   });
 
-  // Narrowed positions for portrait
+  // Reduced from 6 to 4 signs for RAM optimization
   const signs = [
     { pos: [-8, 6, -6] as [number, number, number], color: '#ff00ff', size: [2.5, 0.7] as [number, number] },
     { pos: [9, 8, -10] as [number, number, number], color: '#00ffff', size: [3, 0.8] as [number, number] },
     { pos: [-12, 12, -15] as [number, number, number], color: '#ffaa00', size: [4, 1] as [number, number] },
-    { pos: [14, 10, -12] as [number, number, number], color: '#00ff88', size: [3, 0.8] as [number, number] },
-    { pos: [-5, 15, -18] as [number, number, number], color: '#ff0066', size: [3.5, 0.9] as [number, number] },
     { pos: [7, 18, -20] as [number, number, number], color: '#00aaff', size: [5, 1.2] as [number, number] },
   ];
 
@@ -334,12 +321,12 @@ function NeonGridLines() {
 
 function Rain() {
   const rainRef = useRef<THREE.Points>(null);
-  const rainCount = 1500;
+  const rainCount = 800; // Reduced from 1500 for RAM optimization
 
   const positions = useMemo(() => {
     const pos = new Float32Array(rainCount * 3);
     for (let i = 0; i < rainCount; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 60; // Narrower for portrait
+      pos[i * 3] = (Math.random() - 0.5) * 60;
       pos[i * 3 + 1] = Math.random() * 60;
       pos[i * 3 + 2] = (Math.random() - 0.5) * 60 - 10;
     }
@@ -455,54 +442,54 @@ function FlyingShips() {
       return x - Math.floor(x);
     };
 
-    // Small Shuttles - 12 ships (fast, numerous)
-    for (let i = 0; i < 12; i++) {
+    // Small Shuttles - reduced from 12 to 8 ships - 50% bigger
+    for (let i = 0; i < 8; i++) {
       fleet.push({
         type: 'shuttle',
-        size: [0.8 + random(i) * 0.4, 0.25 + random(i + 10) * 0.1, 0.4 + random(i + 20) * 0.2],
+        size: [(0.8 + random(i) * 0.4) * 1.5, (0.25 + random(i + 10) * 0.1) * 1.5, (0.4 + random(i + 20) * 0.2) * 1.5],
         speed: 0.28 + random(i + 30) * 0.1,
         color: ['#2a2a40', '#1a2a3a', '#2a1a3a'][i % 3],
-        lightIntensity: 0.35,
+        lightIntensity: 0.5,
         lightColor: random(i + 40) > 0.5 ? '#ffffff' : '#ffeecc',
         engineColor: '#00ccff',
         yBase: 6 + random(i + 50) * 8,
         zLane: -8 - random(i + 60) * 15,
         direction: i % 2 === 0 ? 1 : -1,
-        offset: i * 8,
+        offset: i * 10,
       });
     }
 
-    // Medium Transports - 8 ships (medium speed, standard size)
-    for (let i = 0; i < 8; i++) {
+    // Medium Transports - reduced from 8 to 5 ships - 50% bigger
+    for (let i = 0; i < 5; i++) {
       fleet.push({
         type: 'transport',
-        size: [2.2 + random(i + 100) * 0.6, 0.5 + random(i + 110) * 0.2, 1.0 + random(i + 120) * 0.4],
+        size: [(2.2 + random(i + 100) * 0.6) * 1.5, (0.5 + random(i + 110) * 0.2) * 1.5, (1.0 + random(i + 120) * 0.4) * 1.5],
         speed: 0.15 + random(i + 130) * 0.08,
         color: ['#1a1a28', '#281a28', '#1a2828'][i % 3],
-        lightIntensity: 0.6,
+        lightIntensity: 0.9,
         lightColor: '#ffffff',
         engineColor: '#00aaff',
         yBase: 12 + random(i + 140) * 10,
         zLane: -15 - random(i + 150) * 12,
         direction: i % 2 === 0 ? 1 : -1,
-        offset: i * 12,
+        offset: i * 15,
       });
     }
 
-    // Large Freighters - 5 ships (slow, imposing)
-    for (let i = 0; i < 5; i++) {
+    // Large Freighters - reduced from 5 to 3 ships - 50% bigger
+    for (let i = 0; i < 3; i++) {
       fleet.push({
         type: 'freighter',
-        size: [4.0 + random(i + 200) * 1.5, 1.0 + random(i + 210) * 0.5, 2.0 + random(i + 220) * 0.8],
+        size: [(4.0 + random(i + 200) * 1.5) * 1.5, (1.0 + random(i + 210) * 0.5) * 1.5, (2.0 + random(i + 220) * 0.8) * 1.5],
         speed: 0.06 + random(i + 230) * 0.04,
         color: ['#0a0a1a', '#1a0a1a', '#0a1a1a'][i % 3],
-        lightIntensity: 1.0,
+        lightIntensity: 1.5,
         lightColor: '#ffddaa',
         engineColor: '#ff6600',
         yBase: 20 + random(i + 240) * 15,
         zLane: -25 - random(i + 250) * 10,
         direction: i % 2 === 0 ? 1 : -1,
-        offset: i * 20,
+        offset: i * 25,
       });
     }
 
@@ -746,16 +733,16 @@ function FogLayers() {
 
   return (
     <group ref={fogRef}>
-      {[0, 1, 2, 3, 4].map((i) => (
+      {[0, 1, 2].map((i) => ( // Reduced from 5 to 3 fog layers
         <mesh
           key={i}
-          position={[0, 5 + i * 8, -25]}
+          position={[0, 5 + i * 12, -25]}
         >
-          <planeGeometry args={[100, 12]} />
+          <planeGeometry args={[100, 15]} />
           <meshBasicMaterial
             color="#1a1a2e"
             transparent
-            opacity={0.03}
+            opacity={0.04}
             side={THREE.DoubleSide}
           />
         </mesh>
@@ -798,14 +785,14 @@ function Puddles() {
 // FOREGROUND LAYER: Floating debris close to camera
 function ForegroundDebris() {
   const debrisRef = useRef<THREE.Points>(null);
-  const debrisCount = 200;
+  const debrisCount = 100; // Reduced from 200 for RAM optimization
 
   const positions = useMemo(() => {
     const pos = new Float32Array(debrisCount * 3);
     for (let i = 0; i < debrisCount; i++) {
       pos[i * 3] = (Math.random() - 0.5) * 30;
-      pos[i * 3 + 1] = -30 + Math.random() * 80; // Full vertical range
-      pos[i * 3 + 2] = Math.random() * 8 - 2; // Z = -2 to 6 (close to camera)
+      pos[i * 3 + 1] = -30 + Math.random() * 80;
+      pos[i * 3 + 2] = Math.random() * 8 - 2;
     }
     return pos;
   }, []);
@@ -849,7 +836,7 @@ function DataFragments() {
 
   const fragments = useMemo(() => {
     const frags = [];
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < 8; i++) { // Reduced from 15 for RAM optimization
       frags.push({
         pos: [
           (Math.random() - 0.5) * 20,
@@ -955,7 +942,7 @@ function DroneSwarm() {
 
   const drones = useMemo(() => {
     const d = [];
-    for (let i = 0; i < 25; i++) {
+    for (let i = 0; i < 12; i++) { // Reduced from 25 for RAM optimization
       d.push({
         basePos: [
           (Math.random() - 0.5) * 40,
@@ -1003,14 +990,12 @@ function DroneSwarm() {
 function DistantMegaStructures() {
   const structuresRef = useRef<THREE.Group>(null);
 
+  // Reduced from 7 to 4 structures for RAM optimization
   const structures = useMemo(() => [
     { pos: [-60, 30, -80] as [number, number, number], size: [15, 120, 15] as [number, number, number], color: '#0a0a15' },
     { pos: [70, 40, -90] as [number, number, number], size: [20, 150, 20] as [number, number, number], color: '#0a0a18' },
-    { pos: [-40, 50, -100] as [number, number, number], size: [25, 180, 25] as [number, number, number], color: '#080812' },
-    { pos: [50, 35, -85] as [number, number, number], size: [12, 100, 12] as [number, number, number], color: '#0a0a15' },
     { pos: [0, 60, -110] as [number, number, number], size: [30, 200, 30] as [number, number, number], color: '#080810' },
-    { pos: [-70, 45, -95] as [number, number, number], size: [18, 130, 18] as [number, number, number], color: '#0a0a18' },
-    { pos: [80, 55, -105] as [number, number, number], size: [22, 160, 22] as [number, number, number], color: '#080812' },
+    { pos: [-40, 50, -100] as [number, number, number], size: [25, 180, 25] as [number, number, number], color: '#080812' },
   ], []);
 
   useFrame((state) => {
@@ -1066,11 +1051,10 @@ function DistantMegaStructures() {
 function AtmosphericLightBeams() {
   const beamsRef = useRef<THREE.Group>(null);
 
+  // Reduced from 5 to 3 beams for RAM optimization
   const beams = useMemo(() => [
     { pos: [-50, 0, -70] as [number, number, number], color: '#00ffff', height: 150 },
     { pos: [60, 0, -80] as [number, number, number], color: '#ff00ff', height: 180 },
-    { pos: [-30, 0, -90] as [number, number, number], color: '#00ff88', height: 160 },
-    { pos: [40, 0, -75] as [number, number, number], color: '#ffaa00', height: 140 },
     { pos: [0, 0, -100] as [number, number, number], color: '#ff0066', height: 200 },
   ], []);
 
