@@ -60,6 +60,9 @@ export default function Environment() {
 
       {/* Ground puddle reflections */}
       <Puddles />
+
+      {/* REVERSE-FACING LAYER: Opposite direction with enhanced lighting */}
+      <OppositeEnvironmentLayer />
     </>
   );
 }
@@ -1078,6 +1081,194 @@ function AtmosphericLightBeams() {
             transparent
             opacity={0.1}
             side={THREE.DoubleSide}
+          />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+// REVERSE-FACING LAYER: Behind camera with enhanced lighting
+function OppositeEnvironmentLayer() {
+  const layerRef = useRef<THREE.Group>(null);
+
+  // Enhanced lighting panels positioned behind camera facing forward
+  const lightPanels = useMemo(() => [
+    { pos: [-25, 15, 40] as [number, number, number], size: [20, 15] as [number, number], color: '#00ffff', intensity: 1.2 },
+    { pos: [30, 25, 45] as [number, number, number], size: [18, 20] as [number, number], color: '#ff00ff', intensity: 1.5 },
+    { pos: [-10, 5, 50] as [number, number, number], size: [16, 12] as [number, number], color: '#00ff88', intensity: 1 },
+    { pos: [20, -10, 38] as [number, number, number], size: [14, 18] as [number, number], color: '#ffaa00', intensity: 1.3 },
+  ], []);
+
+  // Reverse-facing structures (tall vertical elements)
+  const structures = useMemo(() => [
+    { pos: [-35, 20, 55] as [number, number, number], size: [8, 50, 8] as [number, number, number], color: '#1a1a2e' },
+    { pos: [40, 30, 60] as [number, number, number], size: [10, 60, 10] as [number, number, number], color: '#2a1a3a' },
+    { pos: [0, 15, 65] as [number, number, number], size: [12, 45, 12] as [number, number, number], color: '#1a2a3a' },
+  ], []);
+
+  useFrame((state) => {
+    if (layerRef.current) {
+      const time = state.clock.elapsedTime;
+      layerRef.current.children.forEach((child, i) => {
+        // Subtle rotation and pulsing
+        if (child instanceof THREE.Group) {
+          child.rotation.y = Math.sin(time * 0.2 + i) * 0.1;
+
+          // Pulse light panels
+          const lightMesh = child.children[0] as THREE.Mesh;
+          if (lightMesh && lightMesh.material instanceof THREE.MeshBasicMaterial) {
+            const mat = lightMesh.material as THREE.MeshBasicMaterial;
+            mat.opacity = 0.7 + Math.sin(time * 1.5 + i) * 0.3;
+          }
+
+          // Pulse point lights
+          const lights = child.children.filter(c => c instanceof THREE.Light) as THREE.Light[];
+          lights.forEach((light, li) => {
+            if (light instanceof THREE.PointLight) {
+              light.intensity = lightPanels[i]?.intensity * (0.7 + Math.sin(time * 2 + i + li) * 0.3) || 1;
+            }
+          });
+        }
+      });
+    }
+  });
+
+  return (
+    <group ref={layerRef} position={[0, 0, 0]} rotation={[0, Math.PI, 0]}>
+      {/* Reverse-facing structure towers */}
+      {structures.map((struct, i) => (
+        <group key={`struct-${i}`} position={struct.pos}>
+          {/* Main structure */}
+          <mesh castShadow>
+            <boxGeometry args={struct.size} />
+            <meshStandardMaterial
+              color={struct.color}
+              metalness={0.85}
+              roughness={0.25}
+              emissive="#1a1a28"
+              emissiveIntensity={0.3}
+            />
+          </mesh>
+
+          {/* Window grid on front face */}
+          {Array.from({ length: 6 }).map((_, row) =>
+            Array.from({ length: 4 }).map((_, col) => (
+              <mesh
+                key={`window-${row}-${col}`}
+                position={[
+                  -struct.size[0] / 2 + 1.2 + col * 2,
+                  -struct.size[1] / 2 + 4 + row * 6.5,
+                  struct.size[2] / 2 + 0.01,
+                ]}
+              >
+                <planeGeometry args={[1.2, 2]} />
+                <meshBasicMaterial
+                  color={['#00ffff', '#ff00ff', '#00ff88', '#ffaa00'][col % 4]}
+                  transparent
+                  opacity={0.5}
+                  emissive={['#00ffff', '#ff00ff', '#00ff88', '#ffaa00'][col % 4]}
+                  emissiveIntensity={0.8}
+                />
+              </mesh>
+            ))
+          )}
+
+          {/* Top beacon light */}
+          <pointLight
+            color="#ff00ff"
+            intensity={1}
+            distance={40}
+            position={[0, struct.size[1] / 2 + 3, 0]}
+          />
+
+          {/* Side accent lights */}
+          <pointLight
+            color="#00ffff"
+            intensity={0.7}
+            distance={25}
+            position={[struct.size[0] / 2 + 2, 0, 0]}
+          />
+        </group>
+      ))}
+
+      {/* Enhanced light panels */}
+      {lightPanels.map((panel, i) => (
+        <group key={`panel-${i}`} position={panel.pos}>
+          {/* Main light panel */}
+          <mesh>
+            <planeGeometry args={panel.size} />
+            <meshBasicMaterial
+              color={panel.color}
+              transparent
+              opacity={0.8}
+              emissive={panel.color}
+              emissiveIntensity={1}
+            />
+          </mesh>
+
+          {/* Panel backing frame */}
+          <mesh position={[0, 0, -0.2]}>
+            <boxGeometry args={[panel.size[0] + 0.5, panel.size[1] + 0.5, 0.3]} />
+            <meshStandardMaterial
+              color="#1a1a28"
+              metalness={0.95}
+              roughness={0.15}
+              emissive="#0a0a10"
+              emissiveIntensity={0.2}
+            />
+          </mesh>
+
+          {/* Primary light source */}
+          <pointLight
+            color={panel.color}
+            intensity={panel.intensity}
+            distance={35}
+            position={[0, 0, 5]}
+          />
+
+          {/* Secondary fill light */}
+          <pointLight
+            color={panel.color}
+            intensity={panel.intensity * 0.6}
+            distance={25}
+            position={[0, 0, -3]}
+          />
+        </group>
+      ))}
+
+      {/* Atmospheric glow orbs */}
+      {[-20, 0, 20].map((x, i) => (
+        <group key={`orb-${i}`} position={[x, 35, 52]}>
+          <mesh>
+            <sphereGeometry args={[1.2, 16, 16]} />
+            <meshBasicMaterial
+              color={['#00ffff', '#ff00ff', '#00ff88'][i]}
+              transparent
+              opacity={0.4}
+              emissive={['#00ffff', '#ff00ff', '#00ff88'][i]}
+              emissiveIntensity={0.6}
+            />
+          </mesh>
+          <pointLight
+            color={['#00ffff', '#ff00ff', '#00ff88'][i]}
+            intensity={1.2}
+            distance={30}
+          />
+        </group>
+      ))}
+
+      {/* Volumetric light shafts behind camera */}
+      {[-15, 15].map((z, i) => (
+        <mesh key={`shaft-${i}`} position={[0, 20, 42 + z]}>
+          <cylinderGeometry args={[3, 5, 40, 6]} />
+          <meshBasicMaterial
+            color={i === 0 ? '#00ffff' : '#ff00ff'}
+            transparent
+            opacity={0.06}
+            side={THREE.DoubleSide}
+            emissive={i === 0 ? '#00ffff' : '#ff00ff'}
+            emissiveIntensity={0.3}
           />
         </mesh>
       ))}
