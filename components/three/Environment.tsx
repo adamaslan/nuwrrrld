@@ -1091,6 +1091,8 @@ function AtmosphericLightBeams() {
 // REVERSE-FACING LAYER: Behind camera with enhanced lighting
 function OppositeEnvironmentLayer() {
   const layerRef = useRef<THREE.Group>(null);
+  const windowInstanceRef = useRef<THREE.InstancedMesh>(null);
+  const lightPanelRefs = useRef<THREE.Mesh[]>([]);
 
   // Enhanced lighting panels positioned behind camera facing forward
   const lightPanels = useMemo(() => [
@@ -1107,6 +1109,185 @@ function OppositeEnvironmentLayer() {
     { pos: [0, 15, 65] as [number, number, number], size: [12, 45, 12] as [number, number, number], color: '#1a2a3a' },
   ], []);
 
+  // POOLED GEOMETRIES - created once, reused
+  const geometryPool = useMemo(() => ({
+    window: new THREE.PlaneGeometry(1.2, 2),
+    hull: new THREE.BoxGeometry(1, 1, 1),
+    panel: new THREE.PlaneGeometry(1, 1),
+    orb: new THREE.SphereGeometry(1.2, 16, 16),
+    shaft: new THREE.CylinderGeometry(3, 5, 40, 6),
+  }), []);
+
+  // POOLED MATERIALS - created once, reused
+  const materialPool = useMemo(() => ({
+    hullDarkMetal: new THREE.MeshStandardMaterial({
+      color: '#1a1a2e',
+      metalness: 0.85,
+      roughness: 0.25,
+      emissive: '#1a1a28',
+      emissiveIntensity: 0.3,
+    }),
+    hullPurple: new THREE.MeshStandardMaterial({
+      color: '#2a1a3a',
+      metalness: 0.85,
+      roughness: 0.25,
+      emissive: '#1a1a28',
+      emissiveIntensity: 0.3,
+    }),
+    hullNavy: new THREE.MeshStandardMaterial({
+      color: '#1a2a3a',
+      metalness: 0.85,
+      roughness: 0.25,
+      emissive: '#1a1a28',
+      emissiveIntensity: 0.3,
+    }),
+    windowCyan: new THREE.MeshStandardMaterial({
+      color: '#00ffff',
+      transparent: true,
+      opacity: 0.5,
+      emissive: '#00ffff',
+      emissiveIntensity: 0.8,
+      metalness: 0,
+      roughness: 0.8,
+    }),
+    windowMagenta: new THREE.MeshStandardMaterial({
+      color: '#ff00ff',
+      transparent: true,
+      opacity: 0.5,
+      emissive: '#ff00ff',
+      emissiveIntensity: 0.8,
+      metalness: 0,
+      roughness: 0.8,
+    }),
+    windowGreen: new THREE.MeshStandardMaterial({
+      color: '#00ff88',
+      transparent: true,
+      opacity: 0.5,
+      emissive: '#00ff88',
+      emissiveIntensity: 0.8,
+      metalness: 0,
+      roughness: 0.8,
+    }),
+    windowAmber: new THREE.MeshStandardMaterial({
+      color: '#ffaa00',
+      transparent: true,
+      opacity: 0.5,
+      emissive: '#ffaa00',
+      emissiveIntensity: 0.8,
+      metalness: 0,
+      roughness: 0.8,
+    }),
+    panelFrameCyan: new THREE.MeshStandardMaterial({
+      color: '#1a1a28',
+      metalness: 0.95,
+      roughness: 0.15,
+      emissive: '#00ffff',
+      emissiveIntensity: 0.15,
+    }),
+    panelFrameMagenta: new THREE.MeshStandardMaterial({
+      color: '#1a1a28',
+      metalness: 0.95,
+      roughness: 0.15,
+      emissive: '#ff00ff',
+      emissiveIntensity: 0.15,
+    }),
+    panelFrameGreen: new THREE.MeshStandardMaterial({
+      color: '#1a1a28',
+      metalness: 0.95,
+      roughness: 0.15,
+      emissive: '#00ff88',
+      emissiveIntensity: 0.15,
+    }),
+    panelFrameAmber: new THREE.MeshStandardMaterial({
+      color: '#1a1a28',
+      metalness: 0.95,
+      roughness: 0.15,
+      emissive: '#ffaa00',
+      emissiveIntensity: 0.15,
+    }),
+    panelDisplayCyan: new THREE.MeshStandardMaterial({
+      color: '#00ffff',
+      transparent: true,
+      opacity: 0.8,
+      emissive: '#00ffff',
+      emissiveIntensity: 1,
+      metalness: 0,
+      roughness: 0.8,
+    }),
+    panelDisplayMagenta: new THREE.MeshStandardMaterial({
+      color: '#ff00ff',
+      transparent: true,
+      opacity: 0.8,
+      emissive: '#ff00ff',
+      emissiveIntensity: 1,
+      metalness: 0,
+      roughness: 0.8,
+    }),
+    panelDisplayGreen: new THREE.MeshStandardMaterial({
+      color: '#00ff88',
+      transparent: true,
+      opacity: 0.8,
+      emissive: '#00ff88',
+      emissiveIntensity: 1,
+      metalness: 0,
+      roughness: 0.8,
+    }),
+    panelDisplayAmber: new THREE.MeshStandardMaterial({
+      color: '#ffaa00',
+      transparent: true,
+      opacity: 0.8,
+      emissive: '#ffaa00',
+      emissiveIntensity: 1,
+      metalness: 0,
+      roughness: 0.8,
+    }),
+    shaftCyan: new THREE.MeshStandardMaterial({
+      color: '#00ffff',
+      transparent: true,
+      opacity: 0.06,
+      side: THREE.DoubleSide,
+      emissive: '#00ffff',
+      emissiveIntensity: 0.3,
+      metalness: 0,
+      roughness: 0.8,
+    }),
+    shaftMagenta: new THREE.MeshStandardMaterial({
+      color: '#ff00ff',
+      transparent: true,
+      opacity: 0.06,
+      side: THREE.DoubleSide,
+      emissive: '#ff00ff',
+      emissiveIntensity: 0.3,
+      metalness: 0,
+      roughness: 0.8,
+    }),
+  }), []);
+
+  // Pre-computed material arrays for quick indexing
+  const windowMaterials = useMemo(() => [
+    materialPool.windowCyan,
+    materialPool.windowMagenta,
+    materialPool.windowGreen,
+    materialPool.windowAmber,
+  ], [materialPool]);
+
+  // Orb materials
+  const orbMaterials = useMemo(() => {
+    const colors = ['#00ffff', '#ff00ff', '#00ff88'];
+    return colors.map(
+      (color) =>
+        new THREE.MeshStandardMaterial({
+          color,
+          transparent: true,
+          opacity: 0.4,
+          emissive: color,
+          emissiveIntensity: 0.6,
+          metalness: 0,
+          roughness: 0.8,
+        })
+    );
+  }, []);
+
   useFrame((state) => {
     if (layerRef.current) {
       const time = state.clock.elapsedTime;
@@ -1114,163 +1295,153 @@ function OppositeEnvironmentLayer() {
         // Subtle rotation and pulsing
         if (child instanceof THREE.Group) {
           child.rotation.y = Math.sin(time * 0.2 + i) * 0.1;
-
-          // Pulse light panels
-          const lightMesh = child.children[0] as THREE.Mesh;
-          if (lightMesh && lightMesh.material instanceof THREE.MeshBasicMaterial) {
-            const mat = lightMesh.material as THREE.MeshBasicMaterial;
-            mat.opacity = 0.7 + Math.sin(time * 1.5 + i) * 0.3;
-          }
-
-          // Pulse point lights
-          const lights = child.children.filter(c => c instanceof THREE.Light) as THREE.Light[];
-          lights.forEach((light, li) => {
-            if (light instanceof THREE.PointLight) {
-              light.intensity = lightPanels[i]?.intensity * (0.7 + Math.sin(time * 2 + i + li) * 0.3) || 1;
-            }
-          });
         }
       });
     }
+
+    // Pulse light panel materials
+    lightPanelRefs.current.forEach((mesh, i) => {
+      if (mesh && mesh.material instanceof THREE.MeshStandardMaterial) {
+        const mat = mesh.material as THREE.MeshStandardMaterial;
+        mat.opacity = 0.7 + Math.sin(state.clock.elapsedTime * 1.5 + i) * 0.3;
+      }
+    });
   });
 
   return (
     <group ref={layerRef} position={[0, 0, 0]} rotation={[0, Math.PI, 0]}>
-      {/* Reverse-facing structure towers */}
-      {structures.map((struct, i) => (
-        <group key={`struct-${i}`} position={struct.pos}>
-          {/* Main structure */}
-          <mesh castShadow>
-            <boxGeometry args={struct.size} />
-            <meshStandardMaterial
-              color={struct.color}
-              metalness={0.85}
-              roughness={0.25}
-              emissive="#1a1a28"
-              emissiveIntensity={0.3}
+      {/* Reverse-facing structure towers - using pooled hull material and geometry */}
+      {structures.map((struct, i) => {
+        // Select hull material based on color
+        const hullMatKey = (
+          struct.color === '#1a1a2e' ? 'hullDarkMetal' :
+          struct.color === '#2a1a3a' ? 'hullPurple' :
+          'hullNavy'
+        ) as keyof typeof materialPool;
+        const hullMat = materialPool[hullMatKey];
+
+        return (
+          <group key={`struct-${i}`} position={struct.pos}>
+            {/* Main structure - reuses pool geometry with scale */}
+            <mesh castShadow scale={struct.size} material={hullMat} geometry={geometryPool.hull} />
+
+            {/* Window grid on front face - individual meshes but pooled material/geometry */}
+            {Array.from({ length: 6 }).map((_, row) =>
+              Array.from({ length: 4 }).map((_, col) => {
+                const colIndex = col % 4;
+                const windowMat = windowMaterials[colIndex];
+                return (
+                  <mesh
+                    key={`window-${row}-${col}`}
+                    position={[
+                      -struct.size[0] / 2 + 1.2 + col * 2,
+                      -struct.size[1] / 2 + 4 + row * 6.5,
+                      struct.size[2] / 2 + 0.01,
+                    ]}
+                    geometry={geometryPool.window}
+                    material={windowMat}
+                  />
+                );
+              })
+            )}
+
+            {/* Top beacon light */}
+            <pointLight
+              color="#ff00ff"
+              intensity={1}
+              distance={40}
+              position={[0, struct.size[1] / 2 + 3, 0]}
             />
-          </mesh>
 
-          {/* Window grid on front face */}
-          {Array.from({ length: 6 }).map((_, row) =>
-            Array.from({ length: 4 }).map((_, col) => (
-              <mesh
-                key={`window-${row}-${col}`}
-                position={[
-                  -struct.size[0] / 2 + 1.2 + col * 2,
-                  -struct.size[1] / 2 + 4 + row * 6.5,
-                  struct.size[2] / 2 + 0.01,
-                ]}
-              >
-                <planeGeometry args={[1.2, 2]} />
-                <meshBasicMaterial
-                  color={['#00ffff', '#ff00ff', '#00ff88', '#ffaa00'][col % 4]}
-                  transparent
-                  opacity={0.5}
-                  emissive={['#00ffff', '#ff00ff', '#00ff88', '#ffaa00'][col % 4]}
-                  emissiveIntensity={0.8}
-                />
-              </mesh>
-            ))
-          )}
+            {/* Side accent lights */}
+            <pointLight
+              color="#00ffff"
+              intensity={0.7}
+              distance={25}
+              position={[struct.size[0] / 2 + 2, 0, 0]}
+            />
+          </group>
+        );
+      })}
 
-          {/* Top beacon light */}
-          <pointLight
-            color="#ff00ff"
-            intensity={1}
-            distance={40}
-            position={[0, struct.size[1] / 2 + 3, 0]}
-          />
+      {/* Enhanced light panels - using pooled geometries and materials */}
+      {lightPanels.map((panel, i) => {
+        // Select display and frame materials based on panel color
+        const displayMatKey = (
+          panel.color === '#00ffff' ? 'panelDisplayCyan' :
+          panel.color === '#ff00ff' ? 'panelDisplayMagenta' :
+          panel.color === '#00ff88' ? 'panelDisplayGreen' :
+          'panelDisplayAmber'
+        ) as keyof typeof materialPool;
 
-          {/* Side accent lights */}
-          <pointLight
-            color="#00ffff"
-            intensity={0.7}
-            distance={25}
-            position={[struct.size[0] / 2 + 2, 0, 0]}
-          />
-        </group>
-      ))}
+        const frameMatKey = (
+          panel.color === '#00ffff' ? 'panelFrameCyan' :
+          panel.color === '#ff00ff' ? 'panelFrameMagenta' :
+          panel.color === '#00ff88' ? 'panelFrameGreen' :
+          'panelFrameAmber'
+        ) as keyof typeof materialPool;
 
-      {/* Enhanced light panels */}
-      {lightPanels.map((panel, i) => (
-        <group key={`panel-${i}`} position={panel.pos}>
-          {/* Main light panel */}
-          <mesh>
-            <planeGeometry args={panel.size} />
-            <meshBasicMaterial
+        const panelMat = materialPool[displayMatKey];
+        const frameMat = materialPool[frameMatKey];
+
+        return (
+          <group key={`panel-${i}`} position={panel.pos}>
+            {/* Main light panel - pooled geometry and material */}
+            <mesh
+              ref={(el) => {
+                if (el) lightPanelRefs.current[i] = el;
+              }}
+              scale={[panel.size[0], panel.size[1], 1]}
+              geometry={geometryPool.panel}
+              material={panelMat}
+            />
+
+            {/* Panel backing frame - pooled geometry and material */}
+            <mesh
+              position={[0, 0, -0.2]}
+              scale={[panel.size[0] + 0.5, panel.size[1] + 0.5, 0.3]}
+              geometry={geometryPool.hull}
+              material={frameMat}
+            />
+
+            {/* Primary light source */}
+            <pointLight
               color={panel.color}
-              transparent
-              opacity={0.8}
-              emissive={panel.color}
-              emissiveIntensity={1}
+              intensity={panel.intensity}
+              distance={35}
+              position={[0, 0, 5]}
             />
-          </mesh>
 
-          {/* Panel backing frame */}
-          <mesh position={[0, 0, -0.2]}>
-            <boxGeometry args={[panel.size[0] + 0.5, panel.size[1] + 0.5, 0.3]} />
-            <meshStandardMaterial
-              color="#1a1a28"
-              metalness={0.95}
-              roughness={0.15}
-              emissive="#0a0a10"
-              emissiveIntensity={0.2}
+            {/* Secondary fill light */}
+            <pointLight
+              color={panel.color}
+              intensity={panel.intensity * 0.6}
+              distance={25}
+              position={[0, 0, -3]}
             />
-          </mesh>
+          </group>
+        );
+      })}
 
-          {/* Primary light source */}
-          <pointLight
-            color={panel.color}
-            intensity={panel.intensity}
-            distance={35}
-            position={[0, 0, 5]}
-          />
+      {/* Atmospheric glow orbs - using pooled geometry/material */}
+      {[-20, 0, 20].map((x, i) => {
+        const colors = ['#00ffff', '#ff00ff', '#00ff88'];
+        return (
+          <group key={`orb-${i}`} position={[x, 35, 52]}>
+            <mesh geometry={geometryPool.orb} material={orbMaterials[i]} />
+            <pointLight color={colors[i]} intensity={1.2} distance={30} />
+          </group>
+        );
+      })}
 
-          {/* Secondary fill light */}
-          <pointLight
-            color={panel.color}
-            intensity={panel.intensity * 0.6}
-            distance={25}
-            position={[0, 0, -3]}
-          />
-        </group>
-      ))}
-
-      {/* Atmospheric glow orbs */}
-      {[-20, 0, 20].map((x, i) => (
-        <group key={`orb-${i}`} position={[x, 35, 52]}>
-          <mesh>
-            <sphereGeometry args={[1.2, 16, 16]} />
-            <meshBasicMaterial
-              color={['#00ffff', '#ff00ff', '#00ff88'][i]}
-              transparent
-              opacity={0.4}
-              emissive={['#00ffff', '#ff00ff', '#00ff88'][i]}
-              emissiveIntensity={0.6}
-            />
-          </mesh>
-          <pointLight
-            color={['#00ffff', '#ff00ff', '#00ff88'][i]}
-            intensity={1.2}
-            distance={30}
-          />
-        </group>
-      ))}
-
-      {/* Volumetric light shafts behind camera */}
+      {/* Volumetric light shafts behind camera - using pooled geometry */}
       {[-15, 15].map((z, i) => (
-        <mesh key={`shaft-${i}`} position={[0, 20, 42 + z]}>
-          <cylinderGeometry args={[3, 5, 40, 6]} />
-          <meshBasicMaterial
-            color={i === 0 ? '#00ffff' : '#ff00ff'}
-            transparent
-            opacity={0.06}
-            side={THREE.DoubleSide}
-            emissive={i === 0 ? '#00ffff' : '#ff00ff'}
-            emissiveIntensity={0.3}
-          />
-        </mesh>
+        <mesh
+          key={`shaft-${i}`}
+          position={[0, 20, 42 + z]}
+          geometry={geometryPool.shaft}
+          material={i === 0 ? materialPool.shaftCyan : materialPool.shaftMagenta}
+        />
       ))}
     </group>
   );
