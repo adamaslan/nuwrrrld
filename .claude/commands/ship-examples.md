@@ -148,7 +148,7 @@ function FlyingShips() {
   // ... rest of FlyingShips implementation ...
 }
 
-// NEW: Optimized capital ship component
+// NEW: Optimized capital ship component - DEMONSTRATES PROPER POOLING
 function CapitalShip({
   config,
   index,
@@ -162,16 +162,53 @@ function CapitalShip({
 }) {
   const [width, height, depth] = config.size;
 
+  // Pre-compute engine pod positions (data-only, no geometry)
+  const enginePods = useMemo(() => [
+    { x: -width * 0.35, z: depth * 0.35 },
+    { x: -width * 0.35, z: -depth * 0.35 },
+    { x: width * 0.35, z: depth * 0.35 },
+    { x: width * 0.35, z: -depth * 0.35 },
+  ], [width, depth]);
+
+  // Pre-compute panel positions (data-only, no geometry)
+  const emissionPanels = useMemo(() => [
+    { pos: [0, height * 0.3, depth * 0.5] as [number, number, number] },
+    { pos: [0, height * 0.3, -depth * 0.5] as [number, number, number] },
+  ], [height, depth]);
+
+  // Create engine material once per ship (or pass from pool if available)
+  const engineMat = useMemo(() =>
+    new THREE.MeshStandardMaterial({
+      color: config.engineColor,
+      emissive: config.engineColor,
+      emissiveIntensity: 1,
+      metalness: 0,
+      roughness: 0.8,
+      toneMapped: false,
+    })
+  , [config.engineColor]);
+
+  // Create panel material once per ship (or pass from pool)
+  const panelMat = useMemo(() =>
+    new THREE.MeshStandardMaterial({
+      color: '#00ffff',
+      emissive: '#00ffff',
+      emissiveIntensity: 0.5,
+      metalness: 0,
+      roughness: 0.8,
+    })
+  , []);
+
   return (
     <group position={[0, 0, 0]}>
-      {/* Main hull - using shared geometry and material */}
+      {/* Main hull - using POOLED geometry and material */}
       <mesh
         geometry={geometryCache.box}
         scale={[width, height, depth]}
         material={materialPool.hullDarkMetal}
       />
 
-      {/* Superstructure tower - 1 */}
+      {/* Superstructure tower - 1 - using POOLED geometry and material */}
       <mesh
         position={[-width * 0.2, height * 0.6, 0]}
         geometry={geometryCache.box}
@@ -179,7 +216,7 @@ function CapitalShip({
         material={materialPool.hullNavyBlue}
       />
 
-      {/* Superstructure tower - 2 */}
+      {/* Superstructure tower - 2 - using POOLED geometry and material */}
       <mesh
         position={[width * 0.2, height * 0.5, 0]}
         geometry={geometryCache.box}
@@ -187,7 +224,7 @@ function CapitalShip({
         material={materialPool.hullNavyBlue}
       />
 
-      {/* Command bridge */}
+      {/* Command bridge - using POOLED geometry and material */}
       <mesh
         position={[0, height * 0.75, 0]}
         geometry={geometryCache.box}
@@ -195,41 +232,30 @@ function CapitalShip({
         material={materialPool.cockpitMetal}
       />
 
-      {/* Primary engines (4 pods) - using instancing ideal, here simplified */}
-      {[
-        { x: -width * 0.35, z: depth * 0.35 },
-        { x: -width * 0.35, z: -depth * 0.35 },
-        { x: width * 0.35, z: depth * 0.35 },
-        { x: width * 0.35, z: -depth * 0.35 },
-      ].map((pos, i) => (
-        <mesh key={i} position={[pos.x, -height * 0.2, pos.z]}>
-          <cylinderGeometry args={[height * 0.15, height * 0.2, height * 0.3, 8]} />
-          <meshBasicMaterial
-            color={config.engineColor}
-            emissive={config.engineColor}
-            emissiveIntensity={1}
-            toneMapped={false}
-          />
-        </mesh>
+      {/* Primary engines (4 pods) - using POOLED cylinder geometry, computed positions */}
+      {enginePods.map((pos, i) => (
+        <mesh
+          key={`engine-${i}`}
+          position={[pos.x, -height * 0.2, pos.z]}
+          scale={[height * 0.15, height * 0.3, height * 0.2]}
+          geometry={geometryCache.cylinder}
+          material={engineMat}
+        />
       ))}
 
-      {/* Emission panels (using emissive instead of point lights) */}
-      {[
-        { pos: [0, height * 0.3, depth * 0.5] },
-        { pos: [0, height * 0.3, -depth * 0.5] },
-      ].map((panel, i) => (
-        <mesh key={i} position={panel.pos} scale={[width * 0.5, height * 0.2, 1]}>
-          <planeGeometry args={[1, 1]} />
-          <meshBasicMaterial
-            color="#00ffff"
-            emissive="#00ffff"
-            emissiveIntensity={0.5}
-          />
-        </mesh>
+      {/* Emission panels - using POOLED plane geometry, computed positions */}
+      {emissionPanels.map((panel, i) => (
+        <mesh
+          key={`panel-${i}`}
+          position={panel.pos}
+          scale={[width * 0.5, height * 0.2, 1]}
+          geometry={geometryCache.plane}
+          material={panelMat}
+        />
       ))}
 
-      {/* Note: Windows would be instanced separately for 64-128+ total */}
-      {/* This template shows the part organization for ultra-ships */}
+      {/* Note: Windows would use InstancedMesh for 64-128+ total elements */}
+      {/* This template shows proper pooling for all non-instanced parts */}
     </group>
   );
 }
@@ -247,51 +273,83 @@ function CapitalShip({
 
 Best for: 1x-2x ships, background, swarms
 
+**IMPORTANT:** This template should be passed `geometryPool` and `materialPool` props from parent component. See optimization guide for pooling setup.
+
 ```typescript
-function BasicShip({ config }: { config: ShipConfig }) {
+import { useMemo } from 'react';
+
+function BasicShip({
+  config,
+  geometryPool,
+  materialPool,
+}: {
+  config: ShipConfig;
+  geometryPool: any;
+  materialPool: any;
+}) {
   const [width, height, depth] = config.size;
+
+  // Create ship-specific materials using useMemo (or reuse from pool if available)
+  const hullMat = useMemo(() =>
+    new THREE.MeshStandardMaterial({
+      color: config.color,
+      metalness: 0.92,
+      roughness: 0.15,
+    })
+  , [config.color]);
+
+  const engineGlow = useMemo(() =>
+    new THREE.MeshStandardMaterial({
+      color: config.engineColor,
+      emissive: config.engineColor,
+      emissiveIntensity: 1,
+      metalness: 0,
+      roughness: 0.8,
+      toneMapped: false,
+    })
+  , [config.engineColor]);
 
   return (
     <group>
-      {/* Main hull */}
-      <mesh>
-        <boxGeometry args={[width, height, depth]} />
-        <meshStandardMaterial
-          color={config.color}
-          metalness={0.92}
-          roughness={0.15}
-        />
-      </mesh>
+      {/* Main hull - using POOLED geometry */}
+      <mesh
+        geometry={geometryPool.box}
+        scale={[width, height, depth]}
+        material={hullMat}
+      />
 
-      {/* Cockpit (small) */}
-      <mesh position={[width * 0.35, height * 0.2, 0]}>
-        <boxGeometry args={[width * 0.2, height * 0.4, depth * 0.5]} />
-        <meshStandardMaterial color="#0a1020" metalness={0.95} roughness={0.1} />
-      </mesh>
+      {/* Cockpit (small) - using POOLED geometry */}
+      <mesh
+        position={[width * 0.35, height * 0.2, 0]}
+        geometry={geometryPool.box}
+        scale={[width * 0.2, height * 0.4, depth * 0.5]}
+        material={materialPool.cockpitMetal}
+      />
 
-      {/* Tail lights - red */}
-      <mesh position={[-width * 0.5, 0, depth * 0.3]}>
-        <boxGeometry args={[0.05, height * 0.4, 0.15]} />
-        <meshBasicMaterial color="#ff0033" />
-      </mesh>
+      {/* Tail lights - red - using POOLED geometry */}
+      <mesh
+        position={[-width * 0.5, 0, depth * 0.3]}
+        geometry={geometryPool.box}
+        scale={[0.05, height * 0.4, 0.15]}
+        material={materialPool.tailLight}
+      />
 
-      <mesh position={[-width * 0.5, 0, -depth * 0.3]}>
-        <boxGeometry args={[0.05, height * 0.4, 0.15]} />
-        <meshBasicMaterial color="#ff0033" />
-      </mesh>
+      <mesh
+        position={[-width * 0.5, 0, -depth * 0.3]}
+        geometry={geometryPool.box}
+        scale={[0.05, height * 0.4, 0.15]}
+        material={materialPool.tailLight}
+      />
 
-      {/* Engine glow (emissive) */}
-      <mesh position={[-width * 0.5, 0, 0]}>
-        <sphereGeometry args={[height * 0.3, 8, 8]} />
-        <meshBasicMaterial
-          color={config.engineColor}
-          emissive={config.engineColor}
-          emissiveIntensity={1}
-          toneMapped={false}
-        />
-      </mesh>
+      {/* Engine glow (emissive) - using POOLED geometry */}
+      <mesh
+        position={[-width * 0.5, 0, 0]}
+        geometry={geometryPool.sphere}
+        scale={[height * 0.3, height * 0.3, height * 0.3]}
+        material={engineGlow}
+      />
 
-      {/* Headlight */}
+      {/* Headlight - optional, consider using emissive only for better performance */}
       <pointLight
         color={config.lightColor}
         intensity={config.lightIntensity}

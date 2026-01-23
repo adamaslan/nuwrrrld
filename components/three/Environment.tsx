@@ -420,7 +420,7 @@ function HolographicElements() {
 
 // Ship configuration types
 interface ShipConfig {
-  type: 'shuttle' | 'transport' | 'freighter';
+  type: 'shuttle' | 'transport' | 'freighter' | 'dreadnought';
   size: [number, number, number];
   speed: number;
   color: string;
@@ -496,6 +496,64 @@ function FlyingShips() {
       });
     }
 
+    // Capital Ships (9x size) - 3 ultra-massive ships with different colors/geometries
+    // Capital Ship 1: Deep Navy Blue with Orange Engines
+    fleet.push({
+      type: 'dreadnought',
+      size: [
+        (4.0 + random(300) * 1.5) * 9,     // 36-49.5 units - massive width
+        (1.2 + random(301) * 0.5) * 9,     // 10.8-13.5 units - tall
+        (2.5 + random(302) * 1.0) * 9      // 22.5-29.5 units - deep
+      ],
+      speed: 0.04 + random(303) * 0.015,
+      color: '#1a2a3a',  // Deep navy blue
+      lightIntensity: 1.5,
+      lightColor: '#ffddaa',
+      engineColor: '#ff6600',  // Orange engines
+      yBase: 32 + random(304) * 8,
+      zLane: -50 - random(305) * 15,
+      direction: 1,
+      offset: 0,
+    });
+
+    // Capital Ship 2: Dark Purple with Cyan Engines
+    fleet.push({
+      type: 'dreadnought',
+      size: [
+        (3.8 + random(310) * 1.4) * 9,     // 34.2-48.6 units
+        (1.3 + random(311) * 0.6) * 9,     // 11.7-14.1 units
+        (2.6 + random(312) * 1.1) * 9      // 23.4-31.5 units
+      ],
+      speed: 0.03 + random(313) * 0.012,
+      color: '#2a1a3a',  // Dark purple
+      lightIntensity: 1.4,
+      lightColor: '#ddaaff',  // Purple accent light
+      engineColor: '#00ccff',  // Cyan engines
+      yBase: 35 + random(314) * 8,
+      zLane: -55 - random(315) * 12,
+      direction: -1,
+      offset: 40,
+    });
+
+    // Capital Ship 3: Dark Gray with Green Engines
+    fleet.push({
+      type: 'dreadnought',
+      size: [
+        (4.1 + random(320) * 1.6) * 9,     // 36.9-50.5 units
+        (1.1 + random(321) * 0.4) * 9,     // 9.9-12.6 units
+        (2.4 + random(322) * 0.9) * 9      // 21.6-28.5 units
+      ],
+      speed: 0.035 + random(323) * 0.014,
+      color: '#1a1a28',  // Dark gray
+      lightIntensity: 1.6,
+      lightColor: '#aaffdd',  // Green-tinted light
+      engineColor: '#00ff88',  // Green engines
+      yBase: 29 + random(324) * 9,
+      zLane: -45 - random(325) * 18,
+      direction: 1,
+      offset: 20,
+    });
+
     return fleet;
   }, []);
 
@@ -528,6 +586,162 @@ function FlyingShips() {
   );
 }
 
+function CapitalShip({ config, index }: { config: ShipConfig; index: number }) {
+  const beaconRef = useRef<THREE.PointLight>(null);
+  const engineRef = useRef<THREE.PointLight>(null);
+
+  useFrame((state) => {
+    if (beaconRef.current) {
+      const t = state.clock.elapsedTime;
+      beaconRef.current.intensity = 1 + Math.sin(t * 3 + index) * 0.5;
+    }
+    if (engineRef.current) {
+      const t = state.clock.elapsedTime;
+      engineRef.current.intensity = config.lightIntensity * (0.7 + Math.sin(t * 6 + index) * 0.3);
+    }
+  });
+
+  const [width, height, depth] = config.size;
+
+  // Pre-compute positions for engine pods
+  const enginePods = useMemo(() => [
+    { x: -width * 0.35, z: depth * 0.35 },
+    { x: -width * 0.35, z: -depth * 0.35 },
+    { x: width * 0.25, z: depth * 0.35 },
+    { x: width * 0.25, z: -depth * 0.35 },
+  ], [width, depth]);
+
+  // Pre-compute positions for superstructures
+  const towers = useMemo(() => [
+    { pos: [-width * 0.2, height * 0.6, 0] as [number, number, number], scale: [width * 0.3, height * 0.8, depth * 0.4] as [number, number, number] },
+    { pos: [width * 0.2, height * 0.5, 0] as [number, number, number], scale: [width * 0.25, height * 0.6, depth * 0.35] as [number, number, number] },
+  ], [width, height, depth]);
+
+  // Create ship-specific engine material
+  const engineMat = useMemo(() =>
+    new THREE.MeshStandardMaterial({
+      color: config.engineColor,
+      emissive: config.engineColor,
+      emissiveIntensity: 0.8,
+      metalness: 0.1,
+      roughness: 0.6,
+    })
+  , [config.engineColor]);
+
+  // Create emission panel material
+  const panelMat = useMemo(() =>
+    new THREE.MeshStandardMaterial({
+      color: config.engineColor,
+      emissive: config.engineColor,
+      emissiveIntensity: 0.4,
+      metalness: 0,
+      roughness: 0.8,
+    })
+  , [config.engineColor]);
+
+  return (
+    <group>
+      {/* MAIN HULL */}
+      <mesh castShadow>
+        <boxGeometry args={[width, height, depth]} />
+        <meshStandardMaterial
+          color={config.color}
+          metalness={0.95}
+          roughness={0.12}
+        />
+      </mesh>
+
+      {/* SUPERSTRUCTURE TOWERS (2) - different heights/widths */}
+      {towers.map((tower, i) => (
+        <mesh key={`tower-${i}`} position={tower.pos} castShadow>
+          <boxGeometry args={tower.scale} />
+          <meshStandardMaterial
+            color={config.color}
+            metalness={0.93}
+            roughness={0.14}
+          />
+        </mesh>
+      ))}
+
+      {/* COMMAND BRIDGE - apex structure */}
+      <mesh position={[0, height * 0.75, 0]} castShadow>
+        <boxGeometry args={[width * 0.4, height * 0.3, depth * 0.3]} />
+        <meshStandardMaterial
+          color="#050510"
+          metalness={0.98}
+          roughness={0.08}
+        />
+      </mesh>
+
+      {/* PRIMARY ENGINE PODS (4) - cylindrical engines */}
+      {enginePods.map((pos, i) => (
+        <mesh
+          key={`engine-${i}`}
+          position={[pos.x, -height * 0.2, pos.z]}
+          castShadow
+          material={engineMat}
+        >
+          <cylinderGeometry args={[height * 0.15, height * 0.2, height * 0.3, 12]} />
+        </mesh>
+      ))}
+
+      {/* EMISSION PANELS - side details with glow */}
+      <mesh position={[0, height * 0.25, depth * 0.5]} material={panelMat} castShadow>
+        <boxGeometry args={[width * 0.6, height * 0.15, depth * 0.08]} />
+      </mesh>
+      <mesh position={[0, height * 0.25, -depth * 0.5]} material={panelMat} castShadow>
+        <boxGeometry args={[width * 0.6, height * 0.15, depth * 0.08]} />
+      </mesh>
+
+      {/* VENTRAL DETAILS - additional geometric interest */}
+      <mesh position={[-width * 0.1, -height * 0.35, 0]} castShadow>
+        <boxGeometry args={[width * 0.4, height * 0.15, depth * 0.6]} />
+        <meshStandardMaterial
+          color={config.color}
+          metalness={0.9}
+          roughness={0.18}
+        />
+      </mesh>
+
+      {/* DORSAL RIDGE - top structure */}
+      <mesh position={[0, height * 0.5, 0]} castShadow>
+        <boxGeometry args={[width * 0.25, height * 0.2, depth * 0.8]} />
+        <meshStandardMaterial
+          color={config.color}
+          metalness={0.92}
+          roughness={0.16}
+        />
+      </mesh>
+
+      {/* BEACON LIGHT - pulsing top-mounted light */}
+      <pointLight
+        ref={beaconRef}
+        color={config.engineColor}
+        intensity={1}
+        distance={60}
+        position={[0, height / 2 + 4, 0]}
+      />
+
+      {/* HEADLIGHT - forward-facing light */}
+      <pointLight
+        color={config.lightColor}
+        intensity={config.lightIntensity}
+        distance={50}
+        position={[width * 0.5, height * 0.3, 0]}
+      />
+
+      {/* ENGINE GLOW LIGHT - rear engines */}
+      <pointLight
+        ref={engineRef}
+        color={config.engineColor}
+        intensity={config.lightIntensity * 0.9}
+        distance={40}
+        position={[-width * 0.4, -height * 0.2, 0]}
+      />
+    </group>
+  );
+}
+
 function Ship({ config, index }: { config: ShipConfig; index: number }) {
   const engineRef = useRef<THREE.PointLight>(null);
 
@@ -540,6 +754,11 @@ function Ship({ config, index }: { config: ShipConfig; index: number }) {
   });
 
   const [width, height, depth] = config.size;
+
+  // If it's a capital ship (dreadnought), render with detailed structure
+  if (config.type === 'dreadnought') {
+    return <CapitalShip config={config} index={index} />;
+  }
 
   return (
     <group>

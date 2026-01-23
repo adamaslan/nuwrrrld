@@ -41,7 +41,7 @@ export const SCREEN_CONFIGS: ScreenConfig[] = [
   {
     id: 2,
     type: 'image',
-    path: '/media/nathans1.jpg',
+    path: '/media/thresh-plan1-good',
     // Middle screen - square (1783x1783) - medium depth
     position: [0, 0, -6],
     rotation: [0, 0, 0],
