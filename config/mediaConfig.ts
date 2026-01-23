@@ -40,8 +40,8 @@ export const SCREEN_CONFIGS: ScreenConfig[] = [
   },
   {
     id: 2,
-    type: 'image',
-    path: '/media/thresh-plan1-good',
+    type: 'video',
+    path: '/media/thresh-plan1-good.mov',
     // Middle screen - square (1783x1783) - medium depth
     position: [0, 0, -6],
     rotation: [0, 0, 0],
