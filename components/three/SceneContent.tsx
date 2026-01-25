@@ -1,7 +1,6 @@
 'use client';
 
-import { useRef, useMemo, useEffect } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
+import { useRef, useMemo } from 'react';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import Lighting from './Lighting';
@@ -10,6 +9,7 @@ import TVScreen from './TVScreen';
 import Particles from './Particles';
 import { PoolProvider } from './pools';
 import { SCREEN_CONFIGS } from '@/config/mediaConfig';
+import { SceneErrorBoundary, MediaErrorBoundary } from './ErrorBoundary';
 
 // Custom gradient material using shader
 function GradientSkyDome() {
@@ -57,34 +57,44 @@ function GradientSkyDome() {
 export default function SceneContent() {
   return (
     <PoolProvider>
-      {/* Gradient sky dome background */}
-      <GradientSkyDome />
+      <SceneErrorBoundary
+        onError={(error) => {
+          console.error('Scene error:', error);
+        }}
+      >
+        {/* Gradient sky dome background */}
+        <GradientSkyDome />
 
-      {/* Orbit controls for exploration */}
-      <OrbitControls
-        enablePan={true}
-        enableZoom={true}
-        enableRotate={true}
-        minDistance={5}
-        maxDistance={100}
-        minPolarAngle={0.2}
-        maxPolarAngle={Math.PI - 0.2}
-        target={[0, 0, -5]}
-      />
+        {/* Orbit controls for exploration */}
+        <OrbitControls
+          enablePan={true}
+          enableZoom={true}
+          enableRotate={true}
+          minDistance={5}
+          maxDistance={100}
+          minPolarAngle={0.2}
+          maxPolarAngle={Math.PI - 0.2}
+          target={[0, 0, -5]}
+        />
 
-      {/* Lighting setup */}
-      <Lighting />
+        {/* Lighting setup */}
+        <Lighting />
 
-      {/* Futuristic city environment */}
-      <Environment />
+        {/* Futuristic city environment */}
+        <SceneErrorBoundary fallback={<group />}>
+          <Environment />
+        </SceneErrorBoundary>
 
-      {/* TV Screens - 3 big screens at staggered depths */}
-      {SCREEN_CONFIGS.map((config) => (
-        <TVScreen key={config.id} config={config} />
-      ))}
+        {/* TV Screens - 3 big screens at staggered depths */}
+        {SCREEN_CONFIGS.map((config) => (
+          <MediaErrorBoundary key={config.id}>
+            <TVScreen config={config} />
+          </MediaErrorBoundary>
+        ))}
 
-      {/* Atmospheric particles */}
-      <Particles />
+        {/* Atmospheric particles */}
+        <Particles />
+      </SceneErrorBoundary>
     </PoolProvider>
   );
 }

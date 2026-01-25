@@ -5,7 +5,18 @@ import { useFrame, ThreeEvent, useThree } from '@react-three/fiber';
 import { useVideoTexture, useTexture, Text } from '@react-three/drei';
 import * as THREE from 'three';
 import type { ScreenConfig } from '@/config/mediaConfig';
+import { RESPONSIVE_SCALE, OPACITY, CYBERPUNK_COLORS } from '@/config/constants';
 import SideScreen from './SideScreen';
+
+/**
+ * Interaction timing constants for screen animations.
+ */
+const INTERACTION_TIMING = {
+  /** Duration for tap scale reset (ms) */
+  TAP_SCALE_RESET: 150,
+  /** Duration for tap state reset (ms) */
+  TAP_STATE_RESET: 400,
+} as const;
 
 interface TVScreenProps {
   config: ScreenConfig;
@@ -118,11 +129,11 @@ function useResponsiveScale() {
 
   return useMemo(() => {
     if (isWideScreen) {
-      return 0.85;
+      return RESPONSIVE_SCALE.WIDE_SCREEN;
     } else if (isLandscape) {
-      return 0.9;
+      return RESPONSIVE_SCALE.LANDSCAPE;
     }
-    return 1.0;
+    return RESPONSIVE_SCALE.DEFAULT;
   }, [isLandscape, isWideScreen]);
 }
 
@@ -139,7 +150,7 @@ export default function TVScreen({ config }: TVScreenProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isTapped, setIsTapped] = useState(false);
   const [tapScale, setTapScale] = useState(1);
-  const [glowIntensity, setGlowIntensity] = useState(0.3);
+  const [glowIntensity, setGlowIntensity] = useState<number>(OPACITY.MEDIUM);
 
   // Calculate screen dimensions from aspect ratio (no distortion)
   const screenHeight = config.baseSize * responsiveScale;
@@ -201,13 +212,13 @@ export default function TVScreen({ config }: TVScreenProps) {
     // Reset after animation
     setTimeout(() => {
       setTapScale(1);
-      setGlowIntensity(0.5);
-    }, 150);
+      setGlowIntensity(OPACITY.HIGH);
+    }, INTERACTION_TIMING.TAP_SCALE_RESET);
 
     setTimeout(() => {
       setIsTapped(false);
-      setGlowIntensity(0.3);
-    }, 400);
+      setGlowIntensity(OPACITY.MEDIUM);
+    }, INTERACTION_TIMING.TAP_STATE_RESET);
   }, []);
 
   // Handle pointer enter (hover)
@@ -260,8 +271,8 @@ export default function TVScreen({ config }: TVScreenProps) {
   });
 
   // Glow color based on state
-  const glowColor = isTapped ? '#ff00ff' : (isHovered ? '#00ffff' : '#00ffff');
-  const bezelColor = isTapped ? '#ff00ff' : (isHovered ? '#00ffff' : '#00ffff');
+  const glowColor = isTapped ? CYBERPUNK_COLORS.MAGENTA : CYBERPUNK_COLORS.CYAN;
+  const bezelColor = isTapped ? CYBERPUNK_COLORS.MAGENTA : CYBERPUNK_COLORS.CYAN;
 
   return (
     <group

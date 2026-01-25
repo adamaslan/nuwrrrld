@@ -1,8 +1,14 @@
 import * as THREE from 'three';
 
 /**
- * Interface defining all pooled geometries available for reuse.
- * These geometries are created once and shared across all components.
+ * Geometry pool interface providing pre-created unit geometries.
+ * All geometries are unit-sized (1x1x1) and should be scaled via mesh.scale.
+ *
+ * @example
+ * ```tsx
+ * const { geometries } = usePools();
+ * <mesh geometry={geometries.box} scale={[2, 3, 1]} />
+ * ```
  */
 export interface IGeometryPool {
   /** Unit box geometry (1x1x1) - scale via mesh.scale */
@@ -28,8 +34,19 @@ export interface IGeometryPool {
 }
 
 /**
- * Creates a centralized pool of reusable geometries.
- * All geometries are unit-sized and should be scaled via mesh.scale prop.
+ * Creates a new geometry pool with all standard shapes.
+ * Geometries are created once and should be disposed via disposeGeometryPool.
+ *
+ * @returns Immutable pool of unit geometries
+ * @see disposeGeometryPool
+ *
+ * @example
+ * ```tsx
+ * const geometries = createGeometryPool();
+ * // Use in components...
+ * // On unmount:
+ * disposeGeometryPool(geometries);
+ * ```
  */
 export function createGeometryPool(): IGeometryPool {
   return {
@@ -47,8 +64,18 @@ export function createGeometryPool(): IGeometryPool {
 }
 
 /**
- * Disposes all geometries in the pool.
- * Call this when unmounting the scene to free GPU memory.
+ * Safely disposes all geometries in a pool.
+ * Call this on unmount to prevent memory leaks.
+ *
+ * @param pool - The geometry pool to dispose
+ *
+ * @example
+ * ```tsx
+ * useEffect(() => {
+ *   const pool = createGeometryPool();
+ *   return () => disposeGeometryPool(pool);
+ * }, []);
+ * ```
  */
 export function disposeGeometryPool(pool: IGeometryPool): void {
   Object.values(pool).forEach((geometry) => {

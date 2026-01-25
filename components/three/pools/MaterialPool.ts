@@ -1,8 +1,14 @@
 import * as THREE from 'three';
 
 /**
- * Interface defining all pooled materials available for reuse.
- * These materials are created once and shared across all components.
+ * Material pool interface providing pre-configured materials for the cyberpunk aesthetic.
+ * All materials are created once and shared across components for optimal performance.
+ *
+ * @example
+ * ```tsx
+ * const { materials } = usePools();
+ * <mesh material={materials.windowCyan} />
+ * ```
  */
 export interface IMaterialPool {
   // Building materials
@@ -58,6 +64,17 @@ export interface IMaterialPool {
 /**
  * Creates a centralized pool of reusable materials.
  * Materials are configured with optimal settings for cyberpunk aesthetic.
+ *
+ * @returns Immutable pool of pre-configured materials
+ * @see disposeMaterialPool
+ *
+ * @example
+ * ```tsx
+ * const materials = createMaterialPool();
+ * // Use in components...
+ * // On unmount:
+ * disposeMaterialPool(materials);
+ * ```
  */
 export function createMaterialPool(): IMaterialPool {
   return {
@@ -272,8 +289,18 @@ export function createMaterialPool(): IMaterialPool {
 }
 
 /**
- * Disposes all materials in the pool.
- * Call this when unmounting the scene to free GPU memory.
+ * Safely disposes all materials in a pool.
+ * Call this on unmount to prevent memory leaks.
+ *
+ * @param pool - The material pool to dispose
+ *
+ * @example
+ * ```tsx
+ * useEffect(() => {
+ *   const pool = createMaterialPool();
+ *   return () => disposeMaterialPool(pool);
+ * }, []);
+ * ```
  */
 export function disposeMaterialPool(pool: IMaterialPool): void {
   Object.values(pool).forEach((material) => {
@@ -284,7 +311,17 @@ export function disposeMaterialPool(pool: IMaterialPool): void {
 }
 
 /**
- * Helper to get window material by color name
+ * Maps window color to appropriate pooled material.
+ *
+ * @param pool - The material pool
+ * @param color - Hex color string (#00ffff, #ff00ff, etc.) or color name (cyan, magenta)
+ * @returns MeshBasicMaterial with matching color
+ *
+ * @example
+ * ```tsx
+ * const windowMat = getWindowMaterial(materials, '#00ffff');
+ * <mesh material={windowMat} />
+ * ```
  */
 export function getWindowMaterial(
   pool: IMaterialPool,
@@ -305,7 +342,18 @@ export function getWindowMaterial(
 }
 
 /**
- * Helper to get ship hull material by color
+ * Maps hull color to appropriate ship material.
+ * Analyzes color hex to determine navy/purple/gray variant.
+ *
+ * @param pool - The material pool
+ * @param color - Hex color string or color name
+ * @returns MeshStandardMaterial for ship hull
+ *
+ * @example
+ * ```tsx
+ * const hullMat = getShipHullMaterial(materials, '#1a2a3a');
+ * <mesh material={hullMat} />
+ * ```
  */
 export function getShipHullMaterial(
   pool: IMaterialPool,
