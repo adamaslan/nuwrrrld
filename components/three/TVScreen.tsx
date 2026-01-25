@@ -5,6 +5,7 @@ import { useFrame, ThreeEvent, useThree } from '@react-three/fiber';
 import { useVideoTexture, useTexture, Text } from '@react-three/drei';
 import * as THREE from 'three';
 import type { ScreenConfig } from '@/config/mediaConfig';
+import SideScreen from './SideScreen';
 
 interface TVScreenProps {
   config: ScreenConfig;
@@ -363,6 +364,17 @@ export default function TVScreen({ config }: TVScreenProps) {
         isHovered={isHovered}
         isTapped={isTapped}
       />
+
+      {/* Optional SideScreen panel */}
+      {config.sidePanel?.enabled && (
+        <SideScreen
+          config={config.sidePanel}
+          screenWidth={screenWidth}
+          screenHeight={screenHeight}
+          isHovered={isHovered}
+          isTapped={isTapped}
+        />
+      )}
     </group>
   );
 }
