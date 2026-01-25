@@ -11,6 +11,7 @@ import {
   disposeMaterialPool,
   type IMaterialPool,
 } from './MaterialPool';
+import { PoolContextError } from '@/lib/errors';
 
 /**
  * Type for the pool context value containing both geometry and material pools.
@@ -89,7 +90,7 @@ export function PoolProvider({ children }: PoolProviderProps) {
 export function usePools(): PoolContextType {
   const context = useContext(PoolContext);
   if (!context) {
-    throw new Error('usePools must be used within a PoolProvider');
+    throw new PoolContextError();
   }
   return context;
 }

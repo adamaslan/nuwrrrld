@@ -1,9 +1,12 @@
 'use client';
 
-import { useMemo, useRef, useEffect } from 'react';
+import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { usePools } from './pools';
+import { SCENE_DIMENSIONS, ANIMATION_SPEEDS, OPACITY, BUILDING_CONFIG, CYBERPUNK_COLORS, SHIP_SCALE } from '@/config/constants';
+import type { PoolsProps, ShipConfig, CyberpunkBuildingProps } from '@/types/three-scene';
+import { getMeshBasicMaterial, getMeshStandardMaterial } from '@/lib/type-guards';
 
 export default function Environment() {
   return (
@@ -14,7 +17,7 @@ export default function Environment() {
         position={[0, -2, 0]}
         receiveShadow
       >
-        <planeGeometry args={[200, 250]} />
+        <planeGeometry args={[SCENE_DIMENSIONS.GROUND_PLANE_WIDTH, SCENE_DIMENSIONS.GROUND_PLANE_HEIGHT]} />
         <meshStandardMaterial
           color="#080810"
           metalness={0.9}
@@ -82,8 +85,8 @@ function CityBuildings() {
       return x - Math.floor(x);
     };
 
-    // Left side buildings - reduced from 8 to 5
-    for (let i = 0; i < 5; i++) {
+    // Left side buildings
+    for (let i = 0; i < SCENE_DIMENSIONS.LEFT_BUILDINGS; i++) {
       const height = 25 + random(i) * 50;
       const width = 3 + random(i + 100) * 4;
       const depth = 3 + random(i + 200) * 4;
@@ -91,11 +94,11 @@ function CityBuildings() {
         position: [-12 - i * 6 + random(i + 300) * 2, height / 2 - 2, -12 - random(i + 400) * 20] as [number, number, number],
         size: [width, height, depth] as [number, number, number],
         windowColor: ['#00ffff', '#ff00ff', '#ffaa00', '#00ff88'][Math.floor(random(i + 500) * 4)],
-        hasAntenna: random(i + 600) > 0.6,
+        hasAntenna: random(i + 600) > BUILDING_CONFIG.ANTENNA_THRESHOLD,
       });
     }
-    // Right side buildings - reduced from 8 to 5
-    for (let i = 0; i < 5; i++) {
+    // Right side buildings
+    for (let i = 0; i < SCENE_DIMENSIONS.RIGHT_BUILDINGS; i++) {
       const height = 25 + random(i + 1000) * 50;
       const width = 3 + random(i + 1100) * 4;
       const depth = 3 + random(i + 1200) * 4;
@@ -106,8 +109,8 @@ function CityBuildings() {
         hasAntenna: random(i + 1600) > 0.6,
       });
     }
-    // Background mega-buildings - reduced from 10 to 6
-    for (let i = 0; i < 6; i++) {
+    // Background mega-buildings
+    for (let i = 0; i < SCENE_DIMENSIONS.BACKGROUND_BUILDINGS; i++) {
       const height = 50 + random(i + 2000) * 70;
       const width = 5 + random(i + 2100) * 6;
       const depth = 5 + random(i + 2200) * 6;
@@ -115,7 +118,7 @@ function CityBuildings() {
         position: [-30 + i * 10 + random(i + 2300) * 3, height / 2 - 2, -35 - random(i + 2400) * 15] as [number, number, number],
         size: [width, height, depth] as [number, number, number],
         windowColor: ['#00ffff', '#ff00ff', '#ffaa00', '#00ff88'][Math.floor(random(i + 2500) * 4)],
-        hasAntenna: random(i + 2600) > 0.4,
+        hasAntenna: random(i + 2600) > BUILDING_CONFIG.ANTENNA_THRESHOLD,
       });
     }
     return b;
@@ -140,44 +143,29 @@ function CityBuildings() {
   );
 }
 
-function CyberpunkBuilding({
-  position,
-  size,
-  material,
-  windowColor,
-  index,
-  hasAntenna,
-  geometries,
-  materials,
-}: {
-  position: [number, number, number];
-  size: [number, number, number];
-  material: THREE.Material;
-  windowColor: string;
-  index: number;
-  hasAntenna: boolean;
-  geometries: ReturnType<typeof usePools>['geometries'];
-  materials: ReturnType<typeof usePools>['materials'];
-}) {
-  const windowRefs = useRef<THREE.Mesh[]>([]);
+function CyberpunkBuilding(props: CyberpunkBuildingProps) {
+  const { position, size, material, windowColor, index, hasAntenna, geometries, materials } = props;
+  const windowRefs = useRef<(THREE.Mesh | null)[]>([]);
   const accentRef = useRef<THREE.Mesh>(null);
   const antennaLightRef = useRef<THREE.PointLight>(null);
 
   useFrame((state) => {
     const time = state.clock.elapsedTime;
     windowRefs.current.forEach((mesh, i) => {
-      if (mesh) {
-        const mat = mesh.material as THREE.MeshBasicMaterial;
-        const flicker = Math.sin(time * (2 + index * 0.1) + i * 0.5) > 0.3 ? 1 : 0.2;
-        mat.opacity = (0.4 + Math.sin(time * 0.3 + index + i * 0.2) * 0.3) * flicker;
-      }
+      if (!mesh) return;
+      const mat = getMeshBasicMaterial(mesh);
+      if (!mat) return;
+      const flicker = Math.sin(time * (2 + index * 0.1) + i * 0.5) > 0.3 ? 1 : OPACITY.LOW;
+      mat.opacity = (0.4 + Math.sin(time * ANIMATION_SPEEDS.SLOW + index + i * 0.2) * 0.3) * flicker;
     });
     if (accentRef.current) {
-      const mat = accentRef.current.material as THREE.MeshBasicMaterial;
-      mat.opacity = 0.5 + Math.sin(time * 1.5 + index) * 0.3;
+      const mat = getMeshBasicMaterial(accentRef.current);
+      if (mat) {
+        mat.opacity = OPACITY.HIGH + Math.sin(time * ANIMATION_SPEEDS.MEDIUM + index) * 0.3;
+      }
     }
     if (antennaLightRef.current) {
-      antennaLightRef.current.intensity = 0.5 + Math.sin(time * 4 + index) * 0.3;
+      antennaLightRef.current.intensity = OPACITY.HIGH + Math.sin(time * ANIMATION_SPEEDS.VERY_FAST + index) * 0.3;
     }
   });
 
@@ -268,35 +256,41 @@ function NeonSigns() {
   const signsRef = useRef<THREE.Group>(null);
 
   useFrame((state) => {
-    if (signsRef.current) {
-      signsRef.current.children.forEach((sign, i) => {
-        const mesh = sign.children[0] as THREE.Mesh;
-        const glowMesh = sign.children[1] as THREE.Mesh;
-        if (mesh) {
-          const mat = mesh.material as THREE.MeshStandardMaterial;
-          const time = state.clock.elapsedTime;
-          const flicker = Math.sin(time * 20 + i * 5) > 0.9 ? 0.3 : 1;
-          const intensity = (0.7 + Math.sin(time * 2 + i) * 0.3) * flicker;
+    if (!signsRef.current) return;
+    const time = state.clock.elapsedTime;
+    signsRef.current.children.forEach((sign, i) => {
+      const mesh = sign.children[0] as THREE.Mesh;
+      const glowMesh = sign.children[1] as THREE.Mesh;
+      if (mesh) {
+        const mat = getMeshStandardMaterial(mesh);
+        if (mat) {
+          const flicker = Math.sin(time * ANIMATION_SPEEDS.FLICKER + i * 5) > 0.9 ? OPACITY.LOW : 1;
+          const intensity = (0.7 + Math.sin(time * ANIMATION_SPEEDS.MEDIUM + i) * 0.3) * flicker;
           mat.opacity = intensity;
           mat.emissiveIntensity = intensity * 1.2;
         }
-        if (glowMesh) {
-          const glowMat = glowMesh.material as THREE.MeshBasicMaterial;
-          const time = state.clock.elapsedTime;
-          const flicker = Math.sin(time * 20 + i * 5) > 0.9 ? 0.1 : 1;
-          glowMat.opacity = (0.15 + Math.sin(time * 2 + i) * 0.1) * flicker;
+      }
+      if (glowMesh) {
+        const glowMat = getMeshBasicMaterial(glowMesh);
+        if (glowMat) {
+          const flicker = Math.sin(time * ANIMATION_SPEEDS.FLICKER + i * 5) > 0.9 ? 0.1 : 1;
+          glowMat.opacity = (0.15 + Math.sin(time * ANIMATION_SPEEDS.MEDIUM + i) * 0.1) * flicker;
         }
-      });
-    }
+      }
+    });
   });
 
-  // Reduced from 6 to 4 signs for RAM optimization
-  const signs = [
-    { pos: [-8, 6, -6] as [number, number, number], color: '#ff00ff', size: [2.5, 0.7] as [number, number] },
-    { pos: [9, 8, -10] as [number, number, number], color: '#00ffff', size: [3, 0.8] as [number, number] },
-    { pos: [-12, 12, -15] as [number, number, number], color: '#ffaa00', size: [4, 1] as [number, number] },
-    { pos: [7, 18, -20] as [number, number, number], color: '#00aaff', size: [5, 1.2] as [number, number] },
-  ];
+  // Neon signs array
+  const signs = Array.from({ length: SCENE_DIMENSIONS.NEON_SIGN_COUNT }).map((_, i) => {
+    const positions = [
+      { pos: [-8, 6, -6] as [number, number, number], color: '#ff00ff', size: [2.5, 0.7] as [number, number] },
+      { pos: [9, 8, -10] as [number, number, number], color: '#00ffff', size: [3, 0.8] as [number, number] },
+      { pos: [-12, 12, -15] as [number, number, number], color: '#ffaa00', size: [4, 1] as [number, number] },
+      { pos: [7, 18, -20] as [number, number, number], color: '#00aaff', size: [5, 1.2] as [number, number] },
+    ];
+    return positions[i % positions.length];
+  });
+
 
   return (
     <group ref={signsRef}>
@@ -334,14 +328,15 @@ function NeonGridLines() {
   const linesRef = useRef<THREE.Group>(null);
 
   useFrame((state) => {
-    if (linesRef.current) {
-      const time = state.clock.elapsedTime;
-      linesRef.current.children.forEach((child, i) => {
-        const mesh = child as THREE.Mesh;
-        const mat = mesh.material as THREE.MeshBasicMaterial;
-        mat.opacity = 0.15 + Math.sin(time * 0.8 + i * 0.3) * 0.1;
-      });
-    }
+    if (!linesRef.current) return;
+    const time = state.clock.elapsedTime;
+    linesRef.current.children.forEach((child, i) => {
+      const mesh = child as THREE.Mesh;
+      const mat = getMeshBasicMaterial(mesh);
+      if (mat) {
+        mat.opacity = OPACITY.LOW + Math.sin(time * ANIMATION_SPEEDS.SLOW + i * 0.3) * 0.1;
+      }
+    });
   });
 
   // Narrowed for portrait view
@@ -354,7 +349,7 @@ function NeonGridLines() {
           rotation={[-Math.PI / 2, 0, 0]}
         >
           <planeGeometry args={[80, 0.08]} />
-          <meshBasicMaterial color="#00ffff" transparent opacity={0.15} />
+          <meshBasicMaterial color={CYBERPUNK_COLORS.CYAN} transparent opacity={OPACITY.LOW} />
         </mesh>
       ))}
       {[-30, -20, -10, 0, 10, 20, 30].map((x, i) => (
@@ -364,7 +359,7 @@ function NeonGridLines() {
           rotation={[-Math.PI / 2, 0, Math.PI / 2]}
         >
           <planeGeometry args={[80, 0.08]} />
-          <meshBasicMaterial color="#ff00ff" transparent opacity={0.12} />
+          <meshBasicMaterial color={CYBERPUNK_COLORS.MAGENTA} transparent opacity={OPACITY.LOW} />
         </mesh>
       ))}
     </group>
@@ -373,7 +368,7 @@ function NeonGridLines() {
 
 function Rain() {
   const rainRef = useRef<THREE.Points>(null);
-  const rainCount = 800; // Reduced from 1500 for RAM optimization
+  const rainCount = SCENE_DIMENSIONS.RAIN_COUNT;
 
   const positions = useMemo(() => {
     const pos = new Float32Array(rainCount * 3);
@@ -383,7 +378,7 @@ function Rain() {
       pos[i * 3 + 2] = (Math.random() - 0.5) * 60 - 10;
     }
     return pos;
-  }, []);
+  }, [rainCount]);
 
   useFrame(() => {
     if (rainRef.current) {
@@ -422,16 +417,17 @@ function Rain() {
 }
 
 function HolographicElements() {
-  const holoRefs = useRef<THREE.Mesh[]>([]);
+  const holoRefs = useRef<(THREE.Mesh | null)[]>([]);
 
   useFrame((state) => {
     const time = state.clock.elapsedTime;
     holoRefs.current.forEach((mesh, i) => {
-      if (mesh) {
-        mesh.rotation.y = time * 0.3 + i;
-        mesh.rotation.x = Math.sin(time * 0.5 + i) * 0.2;
-        mesh.position.y = 10 + i * 4 + Math.sin(time * 0.6 + i) * 1;
-        const mat = mesh.material as THREE.MeshBasicMaterial;
+      if (!mesh) return;
+      mesh.rotation.y = time * 0.3 + i;
+      mesh.rotation.x = Math.sin(time * 0.5 + i) * 0.2;
+      mesh.position.y = 10 + i * 4 + Math.sin(time * 0.6 + i) * 1;
+      const mat = getMeshBasicMaterial(mesh);
+      if (mat) {
         mat.opacity = 0.12 + Math.sin(time * 1.5 + i) * 0.08;
       }
     });
@@ -467,20 +463,7 @@ function HolographicElements() {
   );
 }
 
-// Ship configuration types
-interface ShipConfig {
-  type: 'shuttle' | 'transport' | 'freighter' | 'dreadnought';
-  size: [number, number, number];
-  speed: number;
-  color: string;
-  lightIntensity: number;
-  lightColor: string;
-  engineColor: string;
-  yBase: number;
-  zLane: number;
-  direction: 1 | -1;
-  offset: number;
-}
+// ShipConfig is imported from @/types/three-scene
 
 function FlyingShips() {
   const shipsRef = useRef<THREE.Group>(null);
@@ -495,8 +478,8 @@ function FlyingShips() {
       return x - Math.floor(x);
     };
 
-    // Small Shuttles - reduced from 12 to 8 ships - 50% bigger
-    for (let i = 0; i < 8; i++) {
+    // Small Shuttles
+    for (let i = 0; i < SHIP_SCALE.SHUTTLE_COUNT; i++) {
       fleet.push({
         type: 'shuttle',
         size: [(0.8 + random(i) * 0.4) * 1.5, (0.25 + random(i + 10) * 0.1) * 1.5, (0.4 + random(i + 20) * 0.2) * 1.5],
@@ -512,8 +495,8 @@ function FlyingShips() {
       });
     }
 
-    // Medium Transports - reduced from 8 to 5 ships - 50% bigger
-    for (let i = 0; i < 5; i++) {
+    // Medium Transports
+    for (let i = 0; i < SHIP_SCALE.TRANSPORT_COUNT; i++) {
       fleet.push({
         type: 'transport',
         size: [(2.2 + random(i + 100) * 0.6) * 1.5, (0.5 + random(i + 110) * 0.2) * 1.5, (1.0 + random(i + 120) * 0.4) * 1.5],
@@ -529,8 +512,8 @@ function FlyingShips() {
       });
     }
 
-    // Large Freighters - reduced from 5 to 3 ships - 50% bigger
-    for (let i = 0; i < 3; i++) {
+    // Large Freighters
+    for (let i = 0; i < SHIP_SCALE.FREIGHTER_COUNT; i++) {
       fleet.push({
         type: 'freighter',
         size: [(4.0 + random(i + 200) * 1.5) * 1.5, (1.0 + random(i + 210) * 0.5) * 1.5, (2.0 + random(i + 220) * 0.8) * 1.5],
@@ -608,23 +591,22 @@ function FlyingShips() {
   }, []);
 
   useFrame((state) => {
-    if (shipsRef.current) {
-      const time = state.clock.elapsedTime;
-      shipsRef.current.children.forEach((shipGroup, i) => {
-        const config = ships[i];
-        const xRange = config.type === 'freighter' ? 50 : config.type === 'transport' ? 45 : 40;
+    if (!shipsRef.current) return;
+    const time = state.clock.elapsedTime;
+    shipsRef.current.children.forEach((shipGroup, i) => {
+      const config = ships[i];
+      const xRange = config.type === 'freighter' ? 50 : config.type === 'transport' ? 45 : 40;
 
-        // Movement with wrapping - narrower for portrait
-        const rawX = (time * config.speed * config.direction * 12 + config.offset) % (xRange * 2);
-        shipGroup.position.x = rawX - xRange;
-        shipGroup.position.z = config.zLane;
-        shipGroup.position.y = config.yBase + Math.sin(time * 1.5 + i) * 0.4;
-        shipGroup.rotation.y = config.direction > 0 ? 0 : Math.PI;
+      // Movement with wrapping - narrower for portrait
+      const rawX = (time * config.speed * config.direction * 12 + config.offset) % (xRange * 2);
+      shipGroup.position.x = rawX - xRange;
+      shipGroup.position.z = config.zLane;
+      shipGroup.position.y = config.yBase + Math.sin(time * 1.5 + i) * 0.4;
+      shipGroup.rotation.y = config.direction > 0 ? 0 : Math.PI;
 
-        // Slight banking on turns
-        shipGroup.rotation.z = Math.sin(time * 2 + i) * 0.05 * config.direction;
-      });
-    }
+      // Slight banking on turns
+      shipGroup.rotation.z = Math.sin(time * 2 + i) * 0.05 * config.direction;
+    });
   });
 
   return (
@@ -635,11 +617,6 @@ function FlyingShips() {
     </group>
   );
 }
-
-type PoolsProps = {
-  geometries: ReturnType<typeof usePools>['geometries'];
-  materials: ReturnType<typeof usePools>['materials'];
-};
 
 function CapitalShip({ config, index, geometries, materials }: { config: ShipConfig; index: number } & PoolsProps) {
   const beaconRef = useRef<THREE.PointLight>(null);
@@ -977,13 +954,14 @@ function AnimatedBillboards() {
   const billboardsRef = useRef<THREE.Group>(null);
 
   useFrame((state) => {
-    if (billboardsRef.current) {
-      const time = state.clock.elapsedTime;
-      billboardsRef.current.children.forEach((billboard, i) => {
-        const mesh = billboard.children[0] as THREE.Mesh;
-        const glowMesh = billboard.children[2] as THREE.Mesh;
-        if (mesh) {
-          const mat = mesh.material as THREE.MeshStandardMaterial;
+    if (!billboardsRef.current) return;
+    const time = state.clock.elapsedTime;
+    billboardsRef.current.children.forEach((billboard, i) => {
+      const mesh = billboard.children[0] as THREE.Mesh;
+      const glowMesh = billboard.children[2] as THREE.Mesh;
+      if (mesh) {
+        const mat = getMeshStandardMaterial(mesh);
+        if (mat) {
           const hue = (time * 0.1 + i * 0.3) % 1;
           mat.color.setHSL(hue, 0.8, 0.5);
           mat.emissive.setHSL(hue, 0.8, 0.5);
@@ -991,14 +969,16 @@ function AnimatedBillboards() {
           mat.opacity = intensity;
           mat.emissiveIntensity = intensity * 1.5;
         }
-        if (glowMesh) {
-          const glowMat = glowMesh.material as THREE.MeshBasicMaterial;
+      }
+      if (glowMesh) {
+        const glowMat = getMeshBasicMaterial(glowMesh);
+        if (glowMat) {
           const hue = (time * 0.1 + i * 0.3) % 1;
           glowMat.color.setHSL(hue, 0.8, 0.5);
           glowMat.opacity = 0.1 + Math.sin(time * 3 + i) * 0.05;
         }
-      });
-    }
+      }
+    });
   });
 
   // Narrowed positions for portrait
@@ -1049,16 +1029,17 @@ function FogLayers() {
   const fogRef = useRef<THREE.Group>(null);
 
   useFrame((state) => {
-    if (fogRef.current) {
-      const time = state.clock.elapsedTime;
-      fogRef.current.children.forEach((child, i) => {
-        const mesh = child as THREE.Mesh;
-        mesh.position.x = Math.sin(time * 0.05 + i * 2) * 8;
-        mesh.position.z = -25 + Math.cos(time * 0.03 + i) * 4;
-        const mat = mesh.material as THREE.MeshBasicMaterial;
+    if (!fogRef.current) return;
+    const time = state.clock.elapsedTime;
+    fogRef.current.children.forEach((child, i) => {
+      const mesh = child as THREE.Mesh;
+      mesh.position.x = Math.sin(time * 0.05 + i * 2) * 8;
+      mesh.position.z = -25 + Math.cos(time * 0.03 + i) * 4;
+      const mat = getMeshBasicMaterial(mesh);
+      if (mat) {
         mat.opacity = 0.025 + Math.sin(time * 0.1 + i) * 0.015;
-      });
-    }
+      }
+    });
   });
 
   return (
@@ -1182,17 +1163,18 @@ function DataFragments() {
   }, []);
 
   useFrame((state) => {
-    if (fragmentsRef.current) {
-      const time = state.clock.elapsedTime;
-      fragmentsRef.current.children.forEach((child, i) => {
-        child.rotation.y = time * fragments[i].rotSpeed;
-        child.rotation.x = time * fragments[i].rotSpeed * 0.5;
-        child.position.y = fragments[i].pos[1] + Math.sin(time + i) * 0.5;
-        const mesh = child as THREE.Mesh;
-        const mat = mesh.material as THREE.MeshBasicMaterial;
+    if (!fragmentsRef.current) return;
+    const time = state.clock.elapsedTime;
+    fragmentsRef.current.children.forEach((child, i) => {
+      child.rotation.y = time * fragments[i].rotSpeed;
+      child.rotation.x = time * fragments[i].rotSpeed * 0.5;
+      child.position.y = fragments[i].pos[1] + Math.sin(time + i) * 0.5;
+      const mesh = child as THREE.Mesh;
+      const mat = getMeshBasicMaterial(mesh);
+      if (mat) {
         mat.opacity = 0.3 + Math.sin(time * 2 + i) * 0.2;
-      });
-    }
+      }
+    });
   });
 
   return (
@@ -1226,19 +1208,20 @@ function FloatingPlatforms() {
   ], []);
 
   useFrame((state) => {
-    if (platformsRef.current) {
-      const time = state.clock.elapsedTime;
-      platformsRef.current.children.forEach((platform, i) => {
-        platform.position.y = platforms[i].pos[1] + Math.sin(time * 0.3 + i * 2) * 0.5;
-        platform.rotation.y = Math.sin(time * 0.1 + i) * 0.05;
-        // Animate underside glow
-        const undersideMesh = platform.children[2] as THREE.Mesh;
-        if (undersideMesh) {
-          const mat = undersideMesh.material as THREE.MeshStandardMaterial;
+    if (!platformsRef.current) return;
+    const time = state.clock.elapsedTime;
+    platformsRef.current.children.forEach((platform, i) => {
+      platform.position.y = platforms[i].pos[1] + Math.sin(time * 0.3 + i * 2) * 0.5;
+      platform.rotation.y = Math.sin(time * 0.1 + i) * 0.05;
+      // Animate underside glow
+      const undersideMesh = platform.children[2] as THREE.Mesh;
+      if (undersideMesh) {
+        const mat = getMeshStandardMaterial(undersideMesh);
+        if (mat) {
           mat.emissiveIntensity = 0.6 + Math.sin(time * 2 + i) * 0.3;
         }
-      });
-    }
+      }
+    });
   });
 
   return (
@@ -1308,22 +1291,23 @@ function DroneSwarm() {
   }, []);
 
   useFrame((state) => {
-    if (dronesRef.current) {
-      const time = state.clock.elapsedTime;
-      dronesRef.current.children.forEach((drone, i) => {
-        const config = drones[i];
-        drone.position.x = config.basePos[0] + Math.cos(time * config.speed + config.phase) * config.orbitRadius;
-        drone.position.y = config.basePos[1] + Math.sin(time * config.speed * 0.7 + config.phase) * 2;
-        drone.position.z = config.basePos[2] + Math.sin(time * config.speed + config.phase) * config.orbitRadius * 0.5;
-        drone.rotation.y = time * 2;
-        // Animate glow halo
-        const glowMesh = drone.children[1] as THREE.Mesh;
-        if (glowMesh) {
-          const mat = glowMesh.material as THREE.MeshBasicMaterial;
+    if (!dronesRef.current) return;
+    const time = state.clock.elapsedTime;
+    dronesRef.current.children.forEach((drone, i) => {
+      const config = drones[i];
+      drone.position.x = config.basePos[0] + Math.cos(time * config.speed + config.phase) * config.orbitRadius;
+      drone.position.y = config.basePos[1] + Math.sin(time * config.speed * 0.7 + config.phase) * 2;
+      drone.position.z = config.basePos[2] + Math.sin(time * config.speed + config.phase) * config.orbitRadius * 0.5;
+      drone.rotation.y = time * 2;
+      // Animate glow halo
+      const glowMesh = drone.children[1] as THREE.Mesh;
+      if (glowMesh) {
+        const mat = getMeshBasicMaterial(glowMesh);
+        if (mat) {
           mat.opacity = 0.2 + Math.sin(time * 4 + i) * 0.1;
         }
-      });
-    }
+      }
+    });
   });
 
   return (
@@ -1369,25 +1353,28 @@ function DistantMegaStructures() {
   ], []);
 
   useFrame((state) => {
-    if (structuresRef.current) {
-      const time = state.clock.elapsedTime;
-      structuresRef.current.children.forEach((struct, i) => {
-        // Subtle pulse on window lights
-        const windowMesh = struct.children[1] as THREE.Mesh;
-        if (windowMesh) {
-          const mat = windowMesh.material as THREE.MeshStandardMaterial;
+    if (!structuresRef.current) return;
+    const time = state.clock.elapsedTime;
+    structuresRef.current.children.forEach((struct, i) => {
+      // Subtle pulse on window lights
+      const windowMesh = struct.children[1] as THREE.Mesh;
+      if (windowMesh) {
+        const mat = getMeshStandardMaterial(windowMesh);
+        if (mat) {
           const intensity = 0.2 + Math.sin(time * 0.5 + i) * 0.1;
           mat.opacity = intensity;
           mat.emissiveIntensity = intensity * 2;
         }
-        // Pulse beacon
-        const beaconMesh = struct.children[2] as THREE.Mesh;
-        if (beaconMesh) {
-          const mat = beaconMesh.material as THREE.MeshStandardMaterial;
+      }
+      // Pulse beacon
+      const beaconMesh = struct.children[2] as THREE.Mesh;
+      if (beaconMesh) {
+        const mat = getMeshStandardMaterial(beaconMesh);
+        if (mat) {
           mat.emissiveIntensity = 1 + Math.sin(time * 3 + i) * 0.5;
         }
-      });
-    }
+      }
+    });
   });
 
   return (
@@ -1453,13 +1440,15 @@ function AtmosphericLightBeams() {
   ], []);
 
   useFrame((state) => {
-    if (beamsRef.current) {
-      const time = state.clock.elapsedTime;
-      beamsRef.current.children.forEach((beam, i) => {
-        const mat = (beam as THREE.Mesh).material as THREE.MeshBasicMaterial;
+    if (!beamsRef.current) return;
+    const time = state.clock.elapsedTime;
+    beamsRef.current.children.forEach((beam, i) => {
+      const mesh = beam as THREE.Mesh;
+      const mat = getMeshBasicMaterial(mesh);
+      if (mat) {
         mat.opacity = 0.08 + Math.sin(time * 0.3 + i * 2) * 0.04;
-      });
-    }
+      }
+    });
   });
 
   return (
@@ -1482,7 +1471,6 @@ function AtmosphericLightBeams() {
 // REVERSE-FACING LAYER: Behind camera with enhanced lighting
 function OppositeEnvironmentLayer() {
   const layerRef = useRef<THREE.Group>(null);
-  const windowInstanceRef = useRef<THREE.InstancedMesh>(null);
   const lightPanelRefs = useRef<THREE.Mesh[]>([]);
 
   // Use context pools instead of local duplicate pools
@@ -1549,8 +1537,9 @@ function OppositeEnvironmentLayer() {
 
     // Pulse light panel materials
     lightPanelRefs.current.forEach((mesh, i) => {
-      if (mesh && mesh.material instanceof THREE.MeshStandardMaterial) {
-        const mat = mesh.material as THREE.MeshStandardMaterial;
+      if (!mesh) return;
+      const mat = getMeshStandardMaterial(mesh);
+      if (mat) {
         mat.opacity = 0.7 + Math.sin(state.clock.elapsedTime * 1.5 + i) * 0.3;
       }
     });
