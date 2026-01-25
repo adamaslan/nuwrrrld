@@ -8,6 +8,7 @@ import Lighting from './Lighting';
 import Environment from './Environment';
 import TVScreen from './TVScreen';
 import Particles from './Particles';
+import { PoolProvider } from './pools';
 import { SCREEN_CONFIGS } from '@/config/mediaConfig';
 
 // Custom gradient material using shader
@@ -55,7 +56,7 @@ function GradientSkyDome() {
 
 export default function SceneContent() {
   return (
-    <>
+    <PoolProvider>
       {/* Gradient sky dome background */}
       <GradientSkyDome />
 
@@ -84,6 +85,6 @@ export default function SceneContent() {
 
       {/* Atmospheric particles */}
       <Particles />
-    </>
+    </PoolProvider>
   );
 }
