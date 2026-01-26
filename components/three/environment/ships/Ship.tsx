@@ -5,6 +5,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { ShipConfig, PoolsProps } from '@/types/three-scene';
 import CapitalShip from './CapitalShip';
+import { getHullMaterialByColor } from '@/lib/scene-utils';
 
 /**
  * Standard ship component that handles all vessel types.
@@ -35,16 +36,11 @@ export default function Ship({
   const [width, height, depth] = config.size;
   const isCapitalShip = config.type === 'dreadnought';
 
-  // Get ship hull material based on color (memoized)
-  const hullMaterial = useMemo(() => {
-    if (config.color.includes('2a3a') || config.color.includes('1a2a'))
-      return materials.shipHullNavy;
-    if (config.color.includes('1a3a') || config.color.includes('2a1a'))
-      return materials.shipHullPurple;
-    if (config.color.includes('1a28') || config.color.includes('2828'))
-      return materials.shipHullGray;
-    return materials.shipHullDark;
-  }, [config.color, materials]);
+  // Get ship hull material based on color
+  const hullMaterial = useMemo(
+    () => getHullMaterialByColor(materials, config.color),
+    [config.color, materials]
+  );
 
   // Engine light animation - only used for standard ships
   useFrame((state) => {

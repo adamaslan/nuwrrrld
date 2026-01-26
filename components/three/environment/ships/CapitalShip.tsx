@@ -4,6 +4,7 @@ import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { ShipConfig, PoolsProps } from '@/types/three-scene';
+import { getHullMaterialByColor } from '@/lib/scene-utils';
 
 /**
  * Capital ship component for massive dreadnought vessels.
@@ -61,16 +62,10 @@ export default function CapitalShip({
   );
 
   // Get ship hull material based on color
-  const getHullMaterial = () => {
-    if (config.color.includes('2a3a') || config.color.includes('1a2a'))
-      return materials.shipHullNavy;
-    if (config.color.includes('1a3a') || config.color.includes('2a1a'))
-      return materials.shipHullPurple;
-    if (config.color.includes('1a28') || config.color.includes('2828'))
-      return materials.shipHullGray;
-    return materials.shipHullDark;
-  };
-  const hullMaterial = getHullMaterial();
+  const hullMaterial = useMemo(
+    () => getHullMaterialByColor(materials, config.color),
+    [config.color, materials]
+  );
 
   // Get engine material based on engine color
   const getEngineMaterial = () => {

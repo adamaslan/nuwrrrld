@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import type { CyberpunkBuildingProps } from '@/types/three-scene';
 import { getMeshBasicMaterial } from '@/lib/type-guards';
 import { ANIMATION_SPEEDS, OPACITY, BUILDING_CONFIG } from '@/config/constants';
+import { getWindowMaterialByColor } from '@/lib/scene-utils';
 
 /**
  * Cyberpunk-style building with animated windows and optional antenna.
@@ -36,19 +37,7 @@ export default function CyberpunkBuilding({
   const [width, height, depth] = size;
 
   // Get pooled window material based on color
-  const getWindowMaterial = () => {
-    switch (windowColor) {
-      case '#ff00ff':
-        return materials.windowMagenta;
-      case '#ffaa00':
-        return materials.windowAmber;
-      case '#00ff88':
-        return materials.windowGreen;
-      default:
-        return materials.windowCyan;
-    }
-  };
-  const windowMaterial = getWindowMaterial();
+  const windowMaterial = getWindowMaterialByColor(materials, windowColor);
 
   // Generate window grid
   const windowRows = Math.floor(size[1] / 2.5);

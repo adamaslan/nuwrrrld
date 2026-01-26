@@ -18,7 +18,7 @@ import { getMeshStandardMaterial } from '@/lib/type-guards';
  */
 export default function OppositeLayer() {
   const layerRef = useRef<THREE.Group>(null);
-  const lightPanelRefs = useRef<THREE.Mesh[]>([]);
+  const lightPanelRefs = useRef<(THREE.Mesh | null)[]>([]);
 
   // Use context pools instead of local duplicate pools
   const { geometries, materials } = usePools();
