@@ -127,7 +127,7 @@ export const SCREEN_CONFIGS: ScreenConfig[] = [
   {
     id: 2,
     type: 'video',
-    path: '/media/thresh-plan1-good.mov',
+    path: '/media/thresh-plan1-good.mp4',
     position: [0, 0, -6],
     rotation: [0, 0, 0],
     baseSize: 22,
@@ -468,7 +468,7 @@ export default function TVScreen({ config }: TVScreenProps) {
 {
   id: 2,
   type: 'video',
-  path: '/media/thresh-plan1-good.mov',
+  path: '/media/thresh-plan1-good.mp4',
   position: [0, 0, -6],
   rotation: [0, 0, 0],
   baseSize: 22,
