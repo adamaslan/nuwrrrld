@@ -5,6 +5,7 @@ import { useFrame } from '@react-three/fiber';
 import { Text, useTexture } from '@react-three/drei';
 import * as THREE from 'three';
 import type { SidePanelConfig } from '@/config/mediaConfig';
+import { usePools } from '@/components/three/pools/PoolContext';
 
 /**
  * ============================================================================
@@ -204,11 +205,11 @@ function BackgroundImage({
   height: number;
   opacity: number;
 }) {
+  const { geometries } = usePools();
   const texture = useTexture(path);
 
   return (
-    <mesh position={[0, 0, 0]}>
-      <planeGeometry args={[width, height]} />
+    <mesh position={[0, 0, 0]} geometry={geometries.plane} scale={[width, height, 1]}>
       <meshBasicMaterial map={texture} transparent opacity={opacity} />
     </mesh>
   );
@@ -256,6 +257,8 @@ function ConnectingPipes({
   position: 'left' | 'right';
   gap: number;
 }) {
+  const { geometries } = usePools();
+
   // Calculate pipe length (gap between screen edge and panel start)
   const pipeLength = gap;
 
@@ -284,17 +287,10 @@ function ConnectingPipes({
           key={index}
           position={[xPosition, screenHeight * yRatio, CONNECTING_PIPES.Z_OFFSET]}
           rotation={[0, 0, Math.PI / 2]}
+          geometry={geometries.cylinder}
+          scale={[CONNECTING_PIPES.RADIUS, pipeLength, CONNECTING_PIPES.RADIUS]}
           material={pipeMaterial}
-        >
-          <cylinderGeometry
-            args={[
-              CONNECTING_PIPES.RADIUS,
-              CONNECTING_PIPES.RADIUS,
-              pipeLength,
-              CONNECTING_PIPES.SEGMENTS,
-            ]}
-          />
-        </mesh>
+        />
       ))}
     </group>
   );
@@ -316,6 +312,7 @@ export default function SideScreen({
   isHovered,
   isTapped,
 }: SideScreenProps) {
+  const { geometries } = usePools();
   const glowRef = useRef<THREE.Mesh>(null);
 
   // Calculate panel dimensions
@@ -376,14 +373,16 @@ export default function SideScreen({
   return (
     <group position={[xOffset, 0, 0]}>
       {/* Frame border - metal accent (rendered behind background) */}
-      <mesh position={[0, 0, SIDE_SCREEN_ZPOSITION.FRAME_BORDER]} material={frameMaterial}>
-        <planeGeometry
-          args={[
-            panelWidth + SIDE_PANEL_DIMENSIONS.FRAME_BORDER_OFFSET,
-            panelHeight + SIDE_PANEL_DIMENSIONS.FRAME_BORDER_OFFSET,
-          ]}
-        />
-      </mesh>
+      <mesh
+        position={[0, 0, SIDE_SCREEN_ZPOSITION.FRAME_BORDER]}
+        geometry={geometries.plane}
+        scale={[
+          panelWidth + SIDE_PANEL_DIMENSIONS.FRAME_BORDER_OFFSET,
+          panelHeight + SIDE_PANEL_DIMENSIONS.FRAME_BORDER_OFFSET,
+          1,
+        ]}
+        material={frameMaterial}
+      />
 
       {/* Background panel */}
       {config.backgroundImagePath ? (
@@ -394,9 +393,12 @@ export default function SideScreen({
           opacity={config.backgroundOpacity}
         />
       ) : (
-        <mesh position={[0, 0, SIDE_SCREEN_ZPOSITION.BACKGROUND]} material={backgroundMaterial}>
-          <planeGeometry args={[panelWidth, panelHeight]} />
-        </mesh>
+        <mesh
+          position={[0, 0, SIDE_SCREEN_ZPOSITION.BACKGROUND]}
+          geometry={geometries.plane}
+          scale={[panelWidth, panelHeight, 1]}
+          material={backgroundMaterial}
+        />
       )}
 
       {/* Text content */}
@@ -414,13 +416,16 @@ export default function SideScreen({
 
       {/* Glow effect behind panel */}
       {config.glowEnabled && (
-        <mesh ref={glowRef} position={[0, 0, SIDE_SCREEN_ZPOSITION.GLOW_EFFECT]}>
-          <planeGeometry
-            args={[
-              panelWidth * SIDE_PANEL_DIMENSIONS.GLOW_SIZE_RATIO,
-              panelHeight * SIDE_PANEL_DIMENSIONS.GLOW_SIZE_RATIO,
-            ]}
-          />
+        <mesh
+          ref={glowRef}
+          position={[0, 0, SIDE_SCREEN_ZPOSITION.GLOW_EFFECT]}
+          geometry={geometries.plane}
+          scale={[
+            panelWidth * SIDE_PANEL_DIMENSIONS.GLOW_SIZE_RATIO,
+            panelHeight * SIDE_PANEL_DIMENSIONS.GLOW_SIZE_RATIO,
+            1,
+          ]}
+        >
           <meshBasicMaterial
             color={config.glowColor || config.textColor}
             transparent
@@ -440,10 +445,9 @@ export default function SideScreen({
           panelHeight * SIDE_PANEL_DIMENSIONS.EDGE_TOP_POSITION_RATIO,
           SIDE_SCREEN_ZPOSITION.TOP_EDGE,
         ]}
+        geometry={geometries.plane}
+        scale={[panelWidth * SIDE_PANEL_DIMENSIONS.EDGE_WIDTH_RATIO, SIDE_PANEL_DIMENSIONS.EDGE_HEIGHT, 1]}
       >
-        <planeGeometry
-          args={[panelWidth * SIDE_PANEL_DIMENSIONS.EDGE_WIDTH_RATIO, SIDE_PANEL_DIMENSIONS.EDGE_HEIGHT]}
-        />
         <meshBasicMaterial
           color={config.glowColor || config.textColor}
           transparent
@@ -458,10 +462,9 @@ export default function SideScreen({
           -panelHeight * SIDE_PANEL_DIMENSIONS.EDGE_BOTTOM_POSITION_RATIO,
           SIDE_SCREEN_ZPOSITION.BOTTOM_EDGE,
         ]}
+        geometry={geometries.plane}
+        scale={[panelWidth * SIDE_PANEL_DIMENSIONS.EDGE_WIDTH_RATIO, SIDE_PANEL_DIMENSIONS.EDGE_HEIGHT, 1]}
       >
-        <planeGeometry
-          args={[panelWidth * SIDE_PANEL_DIMENSIONS.EDGE_WIDTH_RATIO, SIDE_PANEL_DIMENSIONS.EDGE_HEIGHT]}
-        />
         <meshBasicMaterial
           color={config.glowColor || config.textColor}
           transparent

@@ -42,6 +42,7 @@ export default function CityBuildings() {
         size: [width, height, depth] as [number, number, number],
         windowColor: colors[Math.floor(randomFn(i + 500) * 4)],
         hasAntenna: randomFn(i + 600) > 0.6,
+        variantSeed: 5000 + i,
       });
     }
 
@@ -71,6 +72,7 @@ export default function CityBuildings() {
         size: [width, height, depth] as [number, number, number],
         windowColor: colors[Math.floor(randomFn(i + 500) * 4)],
         hasAntenna: randomFn(i + 600) > 0.6,
+        variantSeed: 6000 + i,
       });
     }
 
@@ -100,6 +102,7 @@ export default function CityBuildings() {
         size: [width, height, depth] as [number, number, number],
         windowColor: colors[Math.floor(randomFn(i + 500) * 4)],
         hasAntenna: randomFn(i + 600) > 0.6,
+        variantSeed: 7000 + i,
       });
     }
 
@@ -120,6 +123,7 @@ export default function CityBuildings() {
           hasAntenna={config.hasAntenna}
           geometries={geometries}
           materials={materials}
+          variantSeed={config.variantSeed}
         />
       ))}
 
@@ -135,6 +139,7 @@ export default function CityBuildings() {
           hasAntenna={config.hasAntenna}
           geometries={geometries}
           materials={materials}
+          variantSeed={config.variantSeed}
         />
       ))}
 
@@ -150,6 +155,7 @@ export default function CityBuildings() {
           hasAntenna={config.hasAntenna}
           geometries={geometries}
           materials={materials}
+          variantSeed={config.variantSeed}
         />
       ))}
     </group>

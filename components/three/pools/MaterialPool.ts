@@ -11,10 +11,11 @@ import * as THREE from 'three';
  * ```
  */
 export interface IMaterialPool {
-  // Building materials
+  // Building materials (4 total for procedural variation)
   readonly buildingBase: THREE.MeshStandardMaterial;
   readonly buildingDark: THREE.MeshStandardMaterial;
   readonly buildingGrey: THREE.MeshStandardMaterial;
+  readonly buildingNavy: THREE.MeshStandardMaterial;
 
   // Window materials (by color)
   readonly windowCyan: THREE.MeshBasicMaterial;
@@ -22,17 +23,29 @@ export interface IMaterialPool {
   readonly windowGreen: THREE.MeshBasicMaterial;
   readonly windowAmber: THREE.MeshBasicMaterial;
 
-  // Ship hull materials
+  // Ship hull materials (12 total for procedural variation)
   readonly shipHullDark: THREE.MeshStandardMaterial;
   readonly shipHullNavy: THREE.MeshStandardMaterial;
   readonly shipHullPurple: THREE.MeshStandardMaterial;
   readonly shipHullGray: THREE.MeshStandardMaterial;
+  readonly shipHullTeal: THREE.MeshStandardMaterial;
+  readonly shipHullCrimson: THREE.MeshStandardMaterial;
+  readonly shipHullGold: THREE.MeshStandardMaterial;
+  readonly shipHullSlate: THREE.MeshStandardMaterial;
+  readonly shipHullOlive: THREE.MeshStandardMaterial;
+  readonly shipHullMaroon: THREE.MeshStandardMaterial;
+  readonly shipHullSteel: THREE.MeshStandardMaterial;
+  readonly shipHullCopper: THREE.MeshStandardMaterial;
 
-  // Ship engine materials
+  // Ship engine materials (8 total for procedural variation)
   readonly shipEngineOrange: THREE.MeshBasicMaterial;
   readonly shipEngineCyan: THREE.MeshBasicMaterial;
   readonly shipEngineGreen: THREE.MeshBasicMaterial;
   readonly shipEngineBlue: THREE.MeshBasicMaterial;
+  readonly shipEngineMagenta: THREE.MeshBasicMaterial;
+  readonly shipEngineYellow: THREE.MeshBasicMaterial;
+  readonly shipEngineRed: THREE.MeshBasicMaterial;
+  readonly shipEnginePurple: THREE.MeshBasicMaterial;
 
   // Environmental materials
   readonly groundPlane: THREE.MeshStandardMaterial;
@@ -69,6 +82,26 @@ export interface IMaterialPool {
   readonly backPanelBracket: THREE.MeshStandardMaterial;
   readonly backPanelWarningLabel: THREE.MeshBasicMaterial;
   readonly backPanelSerialPlate: THREE.MeshStandardMaterial;
+
+  // TV Screen frame and mounting materials
+  readonly screenBracketMetal: THREE.MeshStandardMaterial;
+  readonly screenFrameIdle: THREE.MeshStandardMaterial;
+  readonly screenFrameHover: THREE.MeshStandardMaterial;
+
+  // Warning label colors
+  readonly warningYellow: THREE.MeshBasicMaterial;
+  readonly warningOrange: THREE.MeshBasicMaterial;
+  readonly warningBlack: THREE.MeshBasicMaterial;
+
+  // Serial plate elements
+  readonly serialPlateText: THREE.MeshStandardMaterial;
+  readonly serialPlateScrew: THREE.MeshStandardMaterial;
+
+  // Side screen backgrounds (one per config)
+  readonly sideScreenBgGreen: THREE.MeshStandardMaterial;
+  readonly sideScreenBgCyan: THREE.MeshStandardMaterial;
+  readonly sideScreenBgPurple: THREE.MeshStandardMaterial;
+  readonly sideScreenBgAmber: THREE.MeshBasicMaterial;
 }
 
 /**
@@ -88,7 +121,7 @@ export interface IMaterialPool {
  */
 export function createMaterialPool(): IMaterialPool {
   return {
-    // Building materials
+    // Building materials (4 total for procedural variation)
     buildingBase: new THREE.MeshStandardMaterial({
       color: '#1a1a2e',
       metalness: 0.8,
@@ -105,6 +138,13 @@ export function createMaterialPool(): IMaterialPool {
       color: '#2a2a3e',
       metalness: 0.7,
       roughness: 0.3,
+    }),
+    buildingNavy: new THREE.MeshStandardMaterial({
+      color: '#1a2a3e',
+      metalness: 0.85,
+      roughness: 0.25,
+      emissive: '#0a1a1e',
+      emissiveIntensity: 0.15,
     }),
 
     // Window materials
@@ -133,7 +173,7 @@ export function createMaterialPool(): IMaterialPool {
       toneMapped: false,
     }),
 
-    // Ship hull materials
+    // Ship hull materials (12 total for procedural variation)
     shipHullDark: new THREE.MeshStandardMaterial({
       color: '#12121a',
       metalness: 0.92,
@@ -154,8 +194,48 @@ export function createMaterialPool(): IMaterialPool {
       metalness: 0.92,
       roughness: 0.12,
     }),
+    shipHullTeal: new THREE.MeshStandardMaterial({
+      color: '#1a3a3a',
+      metalness: 0.88,
+      roughness: 0.17,
+    }),
+    shipHullCrimson: new THREE.MeshStandardMaterial({
+      color: '#3a1a1a',
+      metalness: 0.90,
+      roughness: 0.14,
+    }),
+    shipHullGold: new THREE.MeshStandardMaterial({
+      color: '#3a2a1a',
+      metalness: 0.95,
+      roughness: 0.10,
+    }),
+    shipHullSlate: new THREE.MeshStandardMaterial({
+      color: '#22222a',
+      metalness: 0.91,
+      roughness: 0.16,
+    }),
+    shipHullOlive: new THREE.MeshStandardMaterial({
+      color: '#2a2a1a',
+      metalness: 0.87,
+      roughness: 0.19,
+    }),
+    shipHullMaroon: new THREE.MeshStandardMaterial({
+      color: '#2a1a22',
+      metalness: 0.89,
+      roughness: 0.15,
+    }),
+    shipHullSteel: new THREE.MeshStandardMaterial({
+      color: '#1e1e2a',
+      metalness: 0.93,
+      roughness: 0.11,
+    }),
+    shipHullCopper: new THREE.MeshStandardMaterial({
+      color: '#2a1e1a',
+      metalness: 0.94,
+      roughness: 0.13,
+    }),
 
-    // Ship engine materials
+    // Ship engine materials (8 total for procedural variation)
     shipEngineOrange: new THREE.MeshBasicMaterial({
       color: '#ff6600',
       transparent: true,
@@ -176,6 +256,30 @@ export function createMaterialPool(): IMaterialPool {
     }),
     shipEngineBlue: new THREE.MeshBasicMaterial({
       color: '#00aaff',
+      transparent: true,
+      opacity: 0.6,
+      toneMapped: false,
+    }),
+    shipEngineMagenta: new THREE.MeshBasicMaterial({
+      color: '#ff00ff',
+      transparent: true,
+      opacity: 0.65,
+      toneMapped: false,
+    }),
+    shipEngineYellow: new THREE.MeshBasicMaterial({
+      color: '#ffff00',
+      transparent: true,
+      opacity: 0.55,
+      toneMapped: false,
+    }),
+    shipEngineRed: new THREE.MeshBasicMaterial({
+      color: '#ff3300',
+      transparent: true,
+      opacity: 0.7,
+      toneMapped: false,
+    }),
+    shipEnginePurple: new THREE.MeshBasicMaterial({
+      color: '#aa00ff',
       transparent: true,
       opacity: 0.6,
       toneMapped: false,
@@ -335,6 +439,82 @@ export function createMaterialPool(): IMaterialPool {
       metalness: 0.9,
       roughness: 0.2,
     }),
+
+    // TV Screen frame and mounting materials
+    screenBracketMetal: new THREE.MeshStandardMaterial({
+      color: '#2a2a38',
+      metalness: 0.95,
+      roughness: 0.25,
+    }),
+    screenFrameIdle: new THREE.MeshStandardMaterial({
+      color: '#1a1a28',
+      metalness: 0.9,
+      roughness: 0.2,
+      emissive: '#0a0a12',
+      emissiveIntensity: 0.1,
+    }),
+    screenFrameHover: new THREE.MeshStandardMaterial({
+      color: '#2a2a38',
+      metalness: 0.9,
+      roughness: 0.2,
+      emissive: '#00ffff',
+      emissiveIntensity: 0.3,
+    }),
+
+    // Warning label colors
+    warningYellow: new THREE.MeshBasicMaterial({
+      color: '#ffcc00',
+      toneMapped: false,
+    }),
+    warningOrange: new THREE.MeshBasicMaterial({
+      color: '#ff6600',
+      toneMapped: false,
+    }),
+    warningBlack: new THREE.MeshBasicMaterial({
+      color: '#0a0a0a',
+    }),
+
+    // Serial plate elements
+    serialPlateText: new THREE.MeshStandardMaterial({
+      color: '#cccccc',
+      metalness: 0.1,
+      roughness: 0.9,
+      emissive: '#ffffff',
+      emissiveIntensity: 0.05,
+    }),
+    serialPlateScrew: new THREE.MeshStandardMaterial({
+      color: '#1a1a1a',
+      metalness: 0.95,
+      roughness: 0.3,
+    }),
+
+    // Side screen backgrounds (one per config)
+    sideScreenBgGreen: new THREE.MeshStandardMaterial({
+      color: '#001a12',
+      metalness: 0.85,
+      roughness: 0.4,
+      emissive: '#00ff88',
+      emissiveIntensity: 0.05,
+    }),
+    sideScreenBgCyan: new THREE.MeshStandardMaterial({
+      color: '#001a1a',
+      metalness: 0.85,
+      roughness: 0.4,
+      emissive: '#00ffff',
+      emissiveIntensity: 0.05,
+    }),
+    sideScreenBgPurple: new THREE.MeshStandardMaterial({
+      color: '#1a001a',
+      metalness: 0.85,
+      roughness: 0.4,
+      emissive: '#ff00ff',
+      emissiveIntensity: 0.05,
+    }),
+    sideScreenBgAmber: new THREE.MeshBasicMaterial({
+      color: '#1a1a00',
+      transparent: true,
+      opacity: 0.9,
+    }),
   };
 }
 
@@ -420,4 +600,97 @@ export function getShipHullMaterial(
     return pool.shipHullGray;
   }
   return pool.shipHullDark;
+}
+
+/**
+ * Gets hull material by index for procedural ship generation.
+ * Maps index 0-11 to one of 12 hull color variants.
+ *
+ * @param pool - The material pool
+ * @param index - Hull color index (0-11)
+ * @returns MeshStandardMaterial for ship hull
+ *
+ * @example
+ * ```tsx
+ * const hullMat = getHullMaterialByIndex(materials, 5);
+ * <mesh material={hullMat} />
+ * ```
+ */
+export function getHullMaterialByIndex(
+  pool: IMaterialPool,
+  index: number
+): THREE.MeshStandardMaterial {
+  const hullMaterials = [
+    pool.shipHullDark,
+    pool.shipHullNavy,
+    pool.shipHullPurple,
+    pool.shipHullGray,
+    pool.shipHullTeal,
+    pool.shipHullCrimson,
+    pool.shipHullGold,
+    pool.shipHullSlate,
+    pool.shipHullOlive,
+    pool.shipHullMaroon,
+    pool.shipHullSteel,
+    pool.shipHullCopper,
+  ];
+  return hullMaterials[index % 12];
+}
+
+/**
+ * Gets engine material by index for procedural ship generation.
+ * Maps index 0-7 to one of 8 engine glow color variants.
+ *
+ * @param pool - The material pool
+ * @param index - Engine color index (0-7)
+ * @returns MeshBasicMaterial for ship engine glow
+ *
+ * @example
+ * ```tsx
+ * const engineMat = getEngineMaterialByIndex(materials, 3);
+ * <mesh material={engineMat} />
+ * ```
+ */
+export function getEngineMaterialByIndex(
+  pool: IMaterialPool,
+  index: number
+): THREE.MeshBasicMaterial {
+  const engineMaterials = [
+    pool.shipEngineOrange,
+    pool.shipEngineCyan,
+    pool.shipEngineGreen,
+    pool.shipEngineBlue,
+    pool.shipEngineMagenta,
+    pool.shipEngineYellow,
+    pool.shipEngineRed,
+    pool.shipEnginePurple,
+  ];
+  return engineMaterials[index % 8];
+}
+
+/**
+ * Gets building material by index for procedural building generation.
+ * Maps index 0-3 to one of 4 building material variants.
+ *
+ * @param pool - The material pool
+ * @param index - Building material index (0-3)
+ * @returns MeshStandardMaterial for building structure
+ *
+ * @example
+ * ```tsx
+ * const buildingMat = getBuildingMaterialByIndex(materials, 2);
+ * <mesh material={buildingMat} />
+ * ```
+ */
+export function getBuildingMaterialByIndex(
+  pool: IMaterialPool,
+  index: number
+): THREE.MeshStandardMaterial {
+  const buildingMaterials = [
+    pool.buildingBase,
+    pool.buildingDark,
+    pool.buildingGrey,
+    pool.buildingNavy,
+  ];
+  return buildingMaterials[index % 4];
 }

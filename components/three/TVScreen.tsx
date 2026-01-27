@@ -762,7 +762,7 @@ export default function TVScreen({ config }: TVScreenProps) {
   const pulseRef = useRef<THREE.Mesh>(null);
 
   const responsiveScale = useResponsiveScale();
-  const { materials } = usePools();
+  const { materials, geometries } = usePools();
 
   // Interactive state
   const [isHovered, setIsHovered] = useState(false);
@@ -916,11 +916,12 @@ export default function TVScreen({ config }: TVScreenProps) {
       <mesh
         ref={screenMeshRef}
         position={[0, 0, ZPOSITION.SCREEN_CONTENT]}
+        geometry={geometries.plane}
+        scale={[screenWidth, screenHeight, 1]}
         onClick={handleTap}
         onPointerEnter={handlePointerEnter}
         onPointerLeave={handlePointerLeave}
       >
-        <planeGeometry args={[screenWidth, screenHeight]} />
         <Suspense fallback={<FallbackMaterial />}>
           <ScreenMedia type={config.type} path={config.path} />
         </Suspense>
@@ -942,8 +943,11 @@ export default function TVScreen({ config }: TVScreenProps) {
 
       {/* Hover/tap highlight overlay */}
       {(isHovered || isTapped) && (
-        <mesh position={[0, 0, ZPOSITION.HIGHLIGHT_OVERLAY]}>
-          <planeGeometry args={[screenWidth, screenHeight]} />
+        <mesh
+          position={[0, 0, ZPOSITION.HIGHLIGHT_OVERLAY]}
+          geometry={geometries.plane}
+          scale={[screenWidth, screenHeight, 1]}
+        >
           <meshBasicMaterial
             color={isTapped ? CYBERPUNK_COLORS.MAGENTA : CYBERPUNK_COLORS.CYAN}
             transparent
@@ -953,8 +957,12 @@ export default function TVScreen({ config }: TVScreenProps) {
       )}
 
       {/* Scanline effect overlay */}
-      <mesh ref={scanlineRef} position={[0, 0, ZPOSITION.SCANLINE_EFFECT]}>
-        <planeGeometry args={[screenWidth, SCANLINE.HEIGHT]} />
+      <mesh
+        ref={scanlineRef}
+        position={[0, 0, ZPOSITION.SCANLINE_EFFECT]}
+        geometry={geometries.plane}
+        scale={[screenWidth, SCANLINE.HEIGHT, 1]}
+      >
         <meshBasicMaterial
           color="#ffffff"
           transparent
@@ -963,13 +971,15 @@ export default function TVScreen({ config }: TVScreenProps) {
       </mesh>
 
       {/* Screen bezel/border glow */}
-      <mesh position={[0, 0, ZPOSITION.BEZEL_GLOW]}>
-        <planeGeometry
-          args={[
-            screenWidth + BEZEL_GLOW.BORDER_OFFSET,
-            screenHeight + BEZEL_GLOW.BORDER_OFFSET,
-          ]}
-        />
+      <mesh
+        position={[0, 0, ZPOSITION.BEZEL_GLOW]}
+        geometry={geometries.plane}
+        scale={[
+          screenWidth + BEZEL_GLOW.BORDER_OFFSET,
+          screenHeight + BEZEL_GLOW.BORDER_OFFSET,
+          1,
+        ]}
+      >
         <meshBasicMaterial
           color={bezelColor}
           transparent
@@ -996,13 +1006,12 @@ export default function TVScreen({ config }: TVScreenProps) {
       </mesh>
 
       {/* Edge glow behind frame */}
-      <mesh ref={glowRef} position={[0, 0, ZPOSITION.EDGE_GLOW]}>
-        <planeGeometry
-          args={[
-            screenWidth * 1.15,
-            screenHeight * 1.15,
-          ]}
-        />
+      <mesh
+        ref={glowRef}
+        position={[0, 0, ZPOSITION.EDGE_GLOW]}
+        geometry={geometries.plane}
+        scale={[screenWidth * 1.15, screenHeight * 1.15, 1]}
+      >
         <meshBasicMaterial
           color={glowColor}
           transparent
@@ -1017,16 +1026,17 @@ export default function TVScreen({ config }: TVScreenProps) {
         screenHeight={screenHeight}
         isHovered={isHovered}
         isTapped={isTapped}
+        geometries={geometries}
       />
 
       {/* Industrial mounting brackets */}
-      <MountingBrackets screenWidth={screenWidth} screenHeight={screenHeight} material={bracketMaterial} />
+      <MountingBrackets screenWidth={screenWidth} screenHeight={screenHeight} material={bracketMaterial} geometries={geometries} />
 
       {/* Small accent lights on frame */}
-      <FrameAccentLights screenWidth={screenWidth} screenHeight={screenHeight} isHovered={isHovered} />
+      <FrameAccentLights screenWidth={screenWidth} screenHeight={screenHeight} isHovered={isHovered} geometries={geometries} />
 
       {/* Industrial back panel with all components */}
-      <BackPanel screenWidth={screenWidth} screenHeight={screenHeight} screenId={config.id} materials={materials} />
+      <BackPanel screenWidth={screenWidth} screenHeight={screenHeight} screenId={config.id} materials={materials} geometries={geometries} />
 
       {/* Ambient lighting behind screen */}
       <ScreenBackLighting
@@ -1034,6 +1044,7 @@ export default function TVScreen({ config }: TVScreenProps) {
         screenHeight={screenHeight}
         isHovered={isHovered}
         isTapped={isTapped}
+        geometries={geometries}
       />
 
       {/* Optional SideScreen panel */}
@@ -1055,11 +1066,13 @@ function CornerLights({
   screenHeight,
   isHovered,
   isTapped,
+  geometries,
 }: {
   screenWidth: number;
   screenHeight: number;
   isHovered: boolean;
   isTapped: boolean;
+  geometries: ReturnType<typeof usePools>['geometries'];
 }) {
   const lightsRef = useRef<THREE.Group>(null);
 
@@ -1090,8 +1103,12 @@ function CornerLights({
   return (
     <group ref={lightsRef}>
       {corners.map(([x, y], i) => (
-        <mesh key={i} position={[x, y, ZPOSITION.CORNER_LIGHTS]}>
-          <circleGeometry args={[CORNER_LIGHTS.RADIUS, CORNER_LIGHTS.SEGMENTS]} />
+        <mesh
+          key={i}
+          position={[x, y, ZPOSITION.CORNER_LIGHTS]}
+          geometry={geometries.circle}
+          scale={[CORNER_LIGHTS.RADIUS, CORNER_LIGHTS.RADIUS, 1]}
+        >
           <meshBasicMaterial color={color} transparent opacity={CORNER_LIGHTS.OPACITY} />
         </mesh>
       ))}
@@ -1103,10 +1120,12 @@ function MountingBrackets({
   screenWidth,
   screenHeight,
   material,
+  geometries,
 }: {
   screenWidth: number;
   screenHeight: number;
   material: THREE.Material;
+  geometries: ReturnType<typeof usePools>['geometries'];
 }) {
   return (
     <>
@@ -1117,32 +1136,28 @@ function MountingBrackets({
           screenHeight * 0.5 + MOUNTING_BRACKETS.TOP_BRACKET_VERTICAL_OFFSET,
           FRAME_DIMENSIONS.DEPTH_OFFSET,
         ]}
+        geometry={geometries.box}
+        scale={[
+          MOUNTING_BRACKETS.TOP_WIDTH,
+          MOUNTING_BRACKETS.TOP_HEIGHT,
+          MOUNTING_BRACKETS.TOP_DEPTH,
+        ]}
         material={material}
-      >
-        <boxGeometry
-          args={[
-            MOUNTING_BRACKETS.TOP_WIDTH,
-            MOUNTING_BRACKETS.TOP_HEIGHT,
-            MOUNTING_BRACKETS.TOP_DEPTH,
-          ]}
-        />
-      </mesh>
+      />
       <mesh
         position={[
           screenWidth * MOUNTING_BRACKETS.TOP_BRACKET_HORIZONTAL_OFFSET,
           screenHeight * 0.5 + MOUNTING_BRACKETS.TOP_BRACKET_VERTICAL_OFFSET,
           FRAME_DIMENSIONS.DEPTH_OFFSET,
         ]}
+        geometry={geometries.box}
+        scale={[
+          MOUNTING_BRACKETS.TOP_WIDTH,
+          MOUNTING_BRACKETS.TOP_HEIGHT,
+          MOUNTING_BRACKETS.TOP_DEPTH,
+        ]}
         material={material}
-      >
-        <boxGeometry
-          args={[
-            MOUNTING_BRACKETS.TOP_WIDTH,
-            MOUNTING_BRACKETS.TOP_HEIGHT,
-            MOUNTING_BRACKETS.TOP_DEPTH,
-          ]}
-        />
-      </mesh>
+      />
 
       {/* Support cables/rods */}
       <mesh
@@ -1151,60 +1166,50 @@ function MountingBrackets({
           screenHeight * 0.5 + MOUNTING_BRACKETS.CABLE_HEIGHT_OFFSET,
           FRAME_DIMENSIONS.DEPTH_OFFSET,
         ]}
+        geometry={geometries.cylinder}
+        scale={[
+          MOUNTING_BRACKETS.CABLE_RADIUS,
+          1,
+          MOUNTING_BRACKETS.CABLE_RADIUS,
+        ]}
         material={material}
-      >
-        <cylinderGeometry
-          args={[
-            MOUNTING_BRACKETS.CABLE_RADIUS,
-            MOUNTING_BRACKETS.CABLE_RADIUS,
-            1,
-            MOUNTING_BRACKETS.CABLE_SEGMENTS,
-          ]}
-        />
-      </mesh>
+      />
       <mesh
         position={[
           screenWidth * MOUNTING_BRACKETS.TOP_BRACKET_HORIZONTAL_OFFSET,
           screenHeight * 0.5 + MOUNTING_BRACKETS.CABLE_HEIGHT_OFFSET,
           FRAME_DIMENSIONS.DEPTH_OFFSET,
         ]}
+        geometry={geometries.cylinder}
+        scale={[
+          MOUNTING_BRACKETS.CABLE_RADIUS,
+          1,
+          MOUNTING_BRACKETS.CABLE_RADIUS,
+        ]}
         material={material}
-      >
-        <cylinderGeometry
-          args={[
-            MOUNTING_BRACKETS.CABLE_RADIUS,
-            MOUNTING_BRACKETS.CABLE_RADIUS,
-            1,
-            MOUNTING_BRACKETS.CABLE_SEGMENTS,
-          ]}
-        />
-      </mesh>
+      />
 
       {/* Side mounting plates */}
       <mesh
         position={[-screenWidth * MOUNTING_BRACKETS.SIDE_PLATE_HORIZONTAL_OFFSET, 0, -0.05]}
+        geometry={geometries.box}
+        scale={[
+          MOUNTING_BRACKETS.SIDE_PLATE_WIDTH,
+          screenHeight * MOUNTING_BRACKETS.SIDE_PLATE_HEIGHT_RATIO,
+          MOUNTING_BRACKETS.SIDE_PLATE_DEPTH,
+        ]}
         material={material}
-      >
-        <boxGeometry
-          args={[
-            MOUNTING_BRACKETS.SIDE_PLATE_WIDTH,
-            screenHeight * MOUNTING_BRACKETS.SIDE_PLATE_HEIGHT_RATIO,
-            MOUNTING_BRACKETS.SIDE_PLATE_DEPTH,
-          ]}
-        />
-      </mesh>
+      />
       <mesh
         position={[screenWidth * MOUNTING_BRACKETS.SIDE_PLATE_HORIZONTAL_OFFSET, 0, -0.05]}
+        geometry={geometries.box}
+        scale={[
+          MOUNTING_BRACKETS.SIDE_PLATE_WIDTH,
+          screenHeight * MOUNTING_BRACKETS.SIDE_PLATE_HEIGHT_RATIO,
+          MOUNTING_BRACKETS.SIDE_PLATE_DEPTH,
+        ]}
         material={material}
-      >
-        <boxGeometry
-          args={[
-            MOUNTING_BRACKETS.SIDE_PLATE_WIDTH,
-            screenHeight * MOUNTING_BRACKETS.SIDE_PLATE_HEIGHT_RATIO,
-            MOUNTING_BRACKETS.SIDE_PLATE_DEPTH,
-          ]}
-        />
-      </mesh>
+      />
     </>
   );
 }
@@ -1213,10 +1218,12 @@ function FrameAccentLights({
   screenWidth,
   screenHeight,
   isHovered,
+  geometries,
 }: {
   screenWidth: number;
   screenHeight: number;
   isHovered: boolean;
+  geometries: ReturnType<typeof usePools>['geometries'];
 }) {
   const light1Ref = useRef<THREE.Mesh>(null);
   const light2Ref = useRef<THREE.Mesh>(null);
@@ -1236,12 +1243,20 @@ function FrameAccentLights({
 
   return (
     <>
-      <mesh ref={light1Ref} position={[-screenWidth * FRAME_ACCENT_LIGHTS.HORIZONTAL_OFFSET_RATIO, -screenHeight * FRAME_ACCENT_LIGHTS.VERTICAL_OFFSET_RATIO, ZPOSITION.FRAME_ACCENT_LIGHTS]}>
-        <circleGeometry args={[FRAME_ACCENT_LIGHTS.RADIUS, FRAME_ACCENT_LIGHTS.SEGMENTS]} />
+      <mesh
+        ref={light1Ref}
+        position={[-screenWidth * FRAME_ACCENT_LIGHTS.HORIZONTAL_OFFSET_RATIO, -screenHeight * FRAME_ACCENT_LIGHTS.VERTICAL_OFFSET_RATIO, ZPOSITION.FRAME_ACCENT_LIGHTS]}
+        geometry={geometries.circle}
+        scale={[FRAME_ACCENT_LIGHTS.RADIUS, FRAME_ACCENT_LIGHTS.RADIUS, 1]}
+      >
         <meshBasicMaterial color={isHovered ? '#00ff88' : '#00ff00'} transparent opacity={FRAME_ACCENT_LIGHTS.OPACITY} />
       </mesh>
-      <mesh ref={light2Ref} position={[screenWidth * FRAME_ACCENT_LIGHTS.HORIZONTAL_OFFSET_RATIO, -screenHeight * FRAME_ACCENT_LIGHTS.VERTICAL_OFFSET_RATIO, ZPOSITION.FRAME_ACCENT_LIGHTS]}>
-        <circleGeometry args={[FRAME_ACCENT_LIGHTS.RADIUS, FRAME_ACCENT_LIGHTS.SEGMENTS]} />
+      <mesh
+        ref={light2Ref}
+        position={[screenWidth * FRAME_ACCENT_LIGHTS.HORIZONTAL_OFFSET_RATIO, -screenHeight * FRAME_ACCENT_LIGHTS.VERTICAL_OFFSET_RATIO, ZPOSITION.FRAME_ACCENT_LIGHTS]}
+        geometry={geometries.circle}
+        scale={[FRAME_ACCENT_LIGHTS.RADIUS, FRAME_ACCENT_LIGHTS.RADIUS, 1]}
+      >
         <meshBasicMaterial color={isHovered ? '#ff4488' : '#ff0000'} transparent opacity={FRAME_ACCENT_LIGHTS.OPACITY} />
       </mesh>
     </>
@@ -1257,11 +1272,13 @@ function BackPanel({
   screenHeight,
   screenId,
   materials,
+  geometries,
 }: {
   screenWidth: number;
   screenHeight: number;
   screenId: number;
   materials: ReturnType<typeof usePools>['materials'];
+  geometries: ReturnType<typeof usePools>['geometries'];
 }) {
   const panelDepth = -0.3;
   const panelThickness = 0.15;
@@ -1269,31 +1286,33 @@ function BackPanel({
   return (
     <group position={[0, 0, panelDepth]}>
       {/* Main back panel surface */}
-      <mesh>
-        <boxGeometry args={[screenWidth * 1.05, screenHeight * 1.05, panelThickness]} />
+      <mesh
+        geometry={geometries.box}
+        scale={[screenWidth * 1.05, screenHeight * 1.05, panelThickness]}
+      >
         <primitive object={materials.backPanelDarkMetal} attach="material" />
       </mesh>
 
       {/* Ventilation grilles */}
-      <VentilationGrilles screenWidth={screenWidth} screenHeight={screenHeight} materials={materials} />
+      <VentilationGrilles screenWidth={screenWidth} screenHeight={screenHeight} materials={materials} geometries={geometries} />
 
       {/* Power supply unit with LED indicators */}
-      <PowerSupplyUnit screenWidth={screenWidth} screenHeight={screenHeight} screenId={screenId} materials={materials} />
+      <PowerSupplyUnit screenWidth={screenWidth} screenHeight={screenHeight} screenId={screenId} materials={materials} geometries={geometries} />
 
       {/* Cable conduits */}
-      <CableConduits screenWidth={screenWidth} screenHeight={screenHeight} materials={materials} />
+      <CableConduits screenWidth={screenWidth} screenHeight={screenHeight} materials={materials} geometries={geometries} />
 
       {/* Cooling system */}
-      <CoolingSystem screenWidth={screenWidth} screenHeight={screenHeight} screenId={screenId} materials={materials} />
+      <CoolingSystem screenWidth={screenWidth} screenHeight={screenHeight} screenId={screenId} materials={materials} geometries={geometries} />
 
       {/* Structural brackets */}
-      <StructuralBrackets screenWidth={screenWidth} screenHeight={screenHeight} materials={materials} />
+      <StructuralBrackets screenWidth={screenWidth} screenHeight={screenHeight} materials={materials} geometries={geometries} />
 
       {/* Warning labels */}
-      <WarningLabels screenWidth={screenWidth} screenHeight={screenHeight} materials={materials} />
+      <WarningLabels screenWidth={screenWidth} screenHeight={screenHeight} materials={materials} geometries={geometries} />
 
       {/* Serial number plate */}
-      <SerialPlate screenWidth={screenWidth} screenHeight={screenHeight} screenId={screenId} materials={materials} />
+      <SerialPlate screenWidth={screenWidth} screenHeight={screenHeight} screenId={screenId} materials={materials} geometries={geometries} />
     </group>
   );
 }
@@ -1302,10 +1321,12 @@ function VentilationGrilles({
   screenWidth,
   screenHeight,
   materials,
+  geometries,
 }: {
   screenWidth: number;
   screenHeight: number;
   materials: ReturnType<typeof usePools>['materials'];
+  geometries: ReturnType<typeof usePools>['geometries'];
 }) {
   // Simplified: reduced bar count from 8 to 4 for RAM optimization
   const grilleBars = useMemo(() => {
@@ -1329,36 +1350,54 @@ function VentilationGrilles({
     <>
       {/* Left grille - simplified */}
       <group position={[-screenWidth * 0.3, screenHeight * 0.35, 0.08]}>
-        <mesh>
-          <boxGeometry args={[grilleWidth + 0.1, grilleHeight + 0.1, 0.03]} />
+        <mesh
+          geometry={geometries.box}
+          scale={[grilleWidth + 0.1, grilleHeight + 0.1, 0.03]}
+        >
           <primitive object={materials.backPanelVentGrille} attach="material" />
         </mesh>
         {grilleBars.map((bar, i) => (
-          <mesh key={i} position={[0, bar.y, 0.04]}>
-            <boxGeometry args={[grilleWidth * 0.9, 0.025, 0.02]} />
+          <mesh
+            key={i}
+            position={[0, bar.y, 0.04]}
+            geometry={geometries.box}
+            scale={[grilleWidth * 0.9, 0.025, 0.02]}
+          >
             <primitive object={materials.backPanelDarkMetal} attach="material" />
           </mesh>
         ))}
-        <mesh position={[0, 0, -0.02]}>
-          <planeGeometry args={[grilleWidth * 0.8, grilleHeight * 0.8]} />
+        <mesh
+          position={[0, 0, -0.02]}
+          geometry={geometries.plane}
+          scale={[grilleWidth * 0.8, grilleHeight * 0.8, 1]}
+        >
           <meshBasicMaterial color="#00ffff" transparent opacity={0.05} />
         </mesh>
       </group>
 
       {/* Right grille - simplified */}
       <group position={[screenWidth * 0.3, screenHeight * 0.35, 0.08]}>
-        <mesh>
-          <boxGeometry args={[grilleWidth + 0.1, grilleHeight + 0.1, 0.03]} />
+        <mesh
+          geometry={geometries.box}
+          scale={[grilleWidth + 0.1, grilleHeight + 0.1, 0.03]}
+        >
           <primitive object={materials.backPanelVentGrille} attach="material" />
         </mesh>
         {grilleBars.map((bar, i) => (
-          <mesh key={i} position={[0, bar.y, 0.04]}>
-            <boxGeometry args={[grilleWidth * 0.9, 0.025, 0.02]} />
+          <mesh
+            key={i}
+            position={[0, bar.y, 0.04]}
+            geometry={geometries.box}
+            scale={[grilleWidth * 0.9, 0.025, 0.02]}
+          >
             <primitive object={materials.backPanelDarkMetal} attach="material" />
           </mesh>
         ))}
-        <mesh position={[0, 0, -0.02]}>
-          <planeGeometry args={[grilleWidth * 0.8, grilleHeight * 0.8]} />
+        <mesh
+          position={[0, 0, -0.02]}
+          geometry={geometries.plane}
+          scale={[grilleWidth * 0.8, grilleHeight * 0.8, 1]}
+        >
           <meshBasicMaterial color="#ff00ff" transparent opacity={0.05} />
         </mesh>
       </group>
@@ -1371,11 +1410,13 @@ function PowerSupplyUnit({
   screenHeight,
   screenId,
   materials,
+  geometries,
 }: {
   screenWidth: number;
   screenHeight: number;
   screenId: number;
   materials: ReturnType<typeof usePools>['materials'];
+  geometries: ReturnType<typeof usePools>['geometries'];
 }) {
   const ledsRef = useRef<THREE.Group>(null);
 
@@ -1398,22 +1439,31 @@ function PowerSupplyUnit({
   return (
     <group position={[0, screenHeight * 0.15, 0.1]}>
       {/* Power unit box */}
-      <mesh>
-        <boxGeometry args={[unitWidth, unitHeight, 0.1]} />
+      <mesh
+        geometry={geometries.box}
+        scale={[unitWidth, unitHeight, 0.1]}
+      >
         <primitive object={materials.backPanelPowerUnit} attach="material" />
       </mesh>
 
       {/* Power unit label area */}
-      <mesh position={[0, unitHeight * 0.2, 0.051]}>
-        <planeGeometry args={[unitWidth * 0.8, unitHeight * 0.3]} />
+      <mesh
+        position={[0, unitHeight * 0.2, 0.051]}
+        geometry={geometries.plane}
+        scale={[unitWidth * 0.8, unitHeight * 0.3, 1]}
+      >
         <meshStandardMaterial color="#1a1a2a" metalness={0.5} roughness={0.8} />
       </mesh>
 
       {/* LED indicator lights */}
       <group ref={ledsRef} position={[0, -unitHeight * 0.2, 0.06]}>
         {[...Array(5)].map((_, i) => (
-          <mesh key={i} position={[(i - 2) * (unitWidth * 0.15), 0, 0]}>
-            <circleGeometry args={[0.03, 8]} />
+          <mesh
+            key={i}
+            position={[(i - 2) * (unitWidth * 0.15), 0, 0]}
+            geometry={geometries.circle}
+            scale={[0.03, 0.03, 1]}
+          >
             <meshBasicMaterial
               color={i < 3 ? '#00ff00' : i === 3 ? '#ffff00' : '#ff0000'}
               transparent
@@ -1424,8 +1474,11 @@ function PowerSupplyUnit({
       </group>
 
       {/* Power connector */}
-      <mesh position={[unitWidth * 0.35, 0, 0.06]}>
-        <boxGeometry args={[0.08, 0.06, 0.04]} />
+      <mesh
+        position={[unitWidth * 0.35, 0, 0.06]}
+        geometry={geometries.box}
+        scale={[0.08, 0.06, 0.04]}
+      >
         <primitive object={materials.backPanelCable} attach="material" />
       </mesh>
     </group>
@@ -1436,26 +1489,32 @@ function CableConduits({
   screenWidth,
   screenHeight,
   materials,
+  geometries,
 }: {
   screenWidth: number;
   screenHeight: number;
   materials: ReturnType<typeof usePools>['materials'];
+  geometries: ReturnType<typeof usePools>['geometries'];
 }) {
   const conduitWidth = screenWidth * 0.7;
 
   return (
     <group position={[0, 0, 0.08]}>
       {/* Main horizontal conduit */}
-      <mesh>
-        <boxGeometry args={[conduitWidth, 0.08, 0.05]} />
+      <mesh
+        geometry={geometries.box}
+        scale={[conduitWidth, 0.08, 0.05]}
+      >
         <primitive object={materials.backPanelDarkMetal} attach="material" />
       </mesh>
 
       {/* Vertical cable runs - reduced from 4 to 2 for RAM optimization */}
       {[-0.2, 0.2].map((xOffset, i) => (
         <group key={i} position={[screenWidth * xOffset, -screenHeight * 0.15, 0]}>
-          <mesh>
-            <boxGeometry args={[0.05, screenHeight * 0.25, 0.03]} />
+          <mesh
+            geometry={geometries.box}
+            scale={[0.05, screenHeight * 0.25, 0.03]}
+          >
             <primitive object={materials.backPanelCable} attach="material" />
           </mesh>
         </group>
@@ -1469,11 +1528,13 @@ function CoolingSystem({
   screenHeight,
   screenId,
   materials,
+  geometries,
 }: {
   screenWidth: number;
   screenHeight: number;
   screenId: number;
   materials: ReturnType<typeof usePools>['materials'];
+  geometries: ReturnType<typeof usePools>['geometries'];
 }) {
   const fanRef = useRef<THREE.Mesh>(null);
 
@@ -1490,26 +1551,40 @@ function CoolingSystem({
   return (
     <group position={[0, -screenHeight * 0.32, 0.1]}>
       {/* Cooling unit housing */}
-      <mesh>
-        <boxGeometry args={[coolerWidth, coolerHeight, 0.12]} />
+      <mesh
+        geometry={geometries.box}
+        scale={[coolerWidth, coolerHeight, 0.12]}
+      >
         <primitive object={materials.backPanelCoolingUnit} attach="material" />
       </mesh>
 
       {/* Fan housing */}
-      <mesh position={[0, 0, 0.07]}>
-        <cylinderGeometry args={[coolerHeight * 0.35, coolerHeight * 0.35, 0.04, 16]} />
+      <mesh
+        position={[0, 0, 0.07]}
+        geometry={geometries.cylinder}
+        scale={[coolerHeight * 0.35, 0.04, coolerHeight * 0.35]}
+      >
         <primitive object={materials.backPanelDarkMetal} attach="material" />
       </mesh>
 
       {/* Fan blades */}
-      <mesh ref={fanRef} position={[0, 0, 0.1]} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[coolerHeight * 0.25, 0.015, 4, 6]} />
+      <mesh
+        ref={fanRef}
+        position={[0, 0, 0.1]}
+        rotation={[Math.PI / 2, 0, 0]}
+        geometry={geometries.torus}
+        scale={[coolerHeight * 0.25, coolerHeight * 0.25, coolerHeight * 0.25]}
+      >
         <meshStandardMaterial color="#3a3a4a" metalness={0.8} roughness={0.3} />
       </mesh>
 
       {/* Fan center hub */}
-      <mesh position={[0, 0, 0.1]} rotation={[Math.PI / 2, 0, 0]}>
-        <cylinderGeometry args={[0.04, 0.04, 0.02, 8]} />
+      <mesh
+        position={[0, 0, 0.1]}
+        rotation={[Math.PI / 2, 0, 0]}
+        geometry={geometries.cylinder}
+        scale={[0.04, 0.02, 0.04]}
+      >
         <primitive object={materials.backPanelBracket} attach="material" />
       </mesh>
 
@@ -1518,8 +1593,9 @@ function CoolingSystem({
         <mesh
           key={i}
           position={[(i - 1) * (coolerWidth * 0.2), 0, 0.01]}
+          geometry={geometries.box}
+          scale={[0.03, coolerHeight * 0.8, 0.1]}
         >
-          <boxGeometry args={[0.03, coolerHeight * 0.8, 0.1]} />
           <primitive object={materials.backPanelVentGrille} attach="material" />
         </mesh>
       ))}
@@ -1531,42 +1607,61 @@ function StructuralBrackets({
   screenWidth,
   screenHeight,
   materials,
+  geometries,
 }: {
   screenWidth: number;
   screenHeight: number;
   materials: ReturnType<typeof usePools>['materials'];
+  geometries: ReturnType<typeof usePools>['geometries'];
 }) {
   return (
     <>
       {/* Left angled bracket */}
       <group position={[-screenWidth * 0.45, -screenHeight * 0.42, 0.08]}>
         {/* Vertical strut */}
-        <mesh position={[0, 0.05, 0]} rotation={[0, 0, -0.2]}>
-          <boxGeometry args={[0.06, screenHeight * 0.15, 0.04]} />
+        <mesh
+          position={[0, 0.05, 0]}
+          rotation={[0, 0, -0.2]}
+          geometry={geometries.box}
+          scale={[0.06, screenHeight * 0.15, 0.04]}
+        >
           <primitive object={materials.backPanelBracket} attach="material" />
         </mesh>
         {/* Base plate */}
-        <mesh position={[-0.05, -0.08, 0]}>
-          <boxGeometry args={[0.15, 0.04, 0.06]} />
+        <mesh
+          position={[-0.05, -0.08, 0]}
+          geometry={geometries.box}
+          scale={[0.15, 0.04, 0.06]}
+        >
           <primitive object={materials.backPanelBracket} attach="material" />
         </mesh>
       </group>
 
       {/* Right angled bracket */}
       <group position={[screenWidth * 0.45, -screenHeight * 0.42, 0.08]}>
-        <mesh position={[0, 0.05, 0]} rotation={[0, 0, 0.2]}>
-          <boxGeometry args={[0.06, screenHeight * 0.15, 0.04]} />
+        <mesh
+          position={[0, 0.05, 0]}
+          rotation={[0, 0, 0.2]}
+          geometry={geometries.box}
+          scale={[0.06, screenHeight * 0.15, 0.04]}
+        >
           <primitive object={materials.backPanelBracket} attach="material" />
         </mesh>
-        <mesh position={[0.05, -0.08, 0]}>
-          <boxGeometry args={[0.15, 0.04, 0.06]} />
+        <mesh
+          position={[0.05, -0.08, 0]}
+          geometry={geometries.box}
+          scale={[0.15, 0.04, 0.06]}
+        >
           <primitive object={materials.backPanelBracket} attach="material" />
         </mesh>
       </group>
 
       {/* Top reinforcement bar */}
-      <mesh position={[0, screenHeight * 0.48, 0.08]}>
-        <boxGeometry args={[screenWidth * 0.8, 0.05, 0.04]} />
+      <mesh
+        position={[0, screenHeight * 0.48, 0.08]}
+        geometry={geometries.box}
+        scale={[screenWidth * 0.8, 0.05, 0.04]}
+      >
         <primitive object={materials.backPanelBracket} attach="material" />
       </mesh>
     </>
@@ -1577,44 +1672,62 @@ function WarningLabels({
   screenWidth,
   screenHeight,
   materials,
+  geometries,
 }: {
   screenWidth: number;
   screenHeight: number;
   materials: ReturnType<typeof usePools>['materials'];
+  geometries: ReturnType<typeof usePools>['geometries'];
 }) {
   return (
     <>
       {/* HIGH VOLTAGE warning - left side */}
       <group position={[-screenWidth * 0.42, screenHeight * 0.1, 0.08]}>
         {/* Warning background */}
-        <mesh>
-          <planeGeometry args={[0.2, 0.08]} />
+        <mesh
+          geometry={geometries.plane}
+          scale={[0.2, 0.08, 1]}
+        >
           <meshBasicMaterial color="#ffcc00" />
         </mesh>
         {/* Warning stripes */}
-        <mesh position={[0, 0, 0.001]}>
-          <planeGeometry args={[0.18, 0.02]} />
+        <mesh
+          position={[0, 0, 0.001]}
+          geometry={geometries.plane}
+          scale={[0.18, 0.02, 1]}
+        >
           <meshBasicMaterial color="#000000" />
         </mesh>
-        <mesh position={[0, 0.025, 0.001]}>
-          <planeGeometry args={[0.18, 0.02]} />
+        <mesh
+          position={[0, 0.025, 0.001]}
+          geometry={geometries.plane}
+          scale={[0.18, 0.02, 1]}
+        >
           <meshBasicMaterial color="#000000" />
         </mesh>
       </group>
 
       {/* CAUTION label - right side */}
       <group position={[screenWidth * 0.42, screenHeight * 0.1, 0.08]}>
-        <mesh>
-          <planeGeometry args={[0.15, 0.06]} />
+        <mesh
+          geometry={geometries.plane}
+          scale={[0.15, 0.06, 1]}
+        >
           <meshBasicMaterial color="#ff6600" />
         </mesh>
         {/* Exclamation symbol approximation */}
-        <mesh position={[0, 0.005, 0.001]}>
-          <planeGeometry args={[0.015, 0.03]} />
+        <mesh
+          position={[0, 0.005, 0.001]}
+          geometry={geometries.plane}
+          scale={[0.015, 0.03, 1]}
+        >
           <meshBasicMaterial color="#000000" />
         </mesh>
-        <mesh position={[0, -0.02, 0.001]}>
-          <circleGeometry args={[0.008, 8]} />
+        <mesh
+          position={[0, -0.02, 0.001]}
+          geometry={geometries.circle}
+          scale={[0.008, 0.008, 1]}
+        >
           <meshBasicMaterial color="#000000" />
         </mesh>
       </group>
@@ -1627,32 +1740,46 @@ function SerialPlate({
   screenHeight,
   screenId,
   materials,
+  geometries,
 }: {
   screenWidth: number;
   screenHeight: number;
   screenId: number;
   materials: ReturnType<typeof usePools>['materials'];
+  geometries: ReturnType<typeof usePools>['geometries'];
 }) {
   return (
     <group position={[screenWidth * 0.35, -screenHeight * 0.45, 0.08]}>
       {/* Metal plate */}
-      <mesh>
-        <boxGeometry args={[0.25, 0.1, 0.01]} />
+      <mesh
+        geometry={geometries.box}
+        scale={[0.25, 0.1, 0.01]}
+      >
         <primitive object={materials.backPanelSerialPlate} attach="material" />
       </mesh>
       {/* Embossed text effect - simplified as lines */}
-      <mesh position={[0, 0.02, 0.006]}>
-        <planeGeometry args={[0.2, 0.015]} />
+      <mesh
+        position={[0, 0.02, 0.006]}
+        geometry={geometries.plane}
+        scale={[0.2, 0.015, 1]}
+      >
         <meshStandardMaterial color="#2a2a3a" metalness={0.8} roughness={0.4} />
       </mesh>
-      <mesh position={[0, -0.02, 0.006]}>
-        <planeGeometry args={[0.18, 0.015]} />
+      <mesh
+        position={[0, -0.02, 0.006]}
+        geometry={geometries.plane}
+        scale={[0.18, 0.015, 1]}
+      >
         <meshStandardMaterial color="#2a2a3a" metalness={0.8} roughness={0.4} />
       </mesh>
       {/* Corner screws */}
       {[[-0.1, 0.035], [0.1, 0.035], [-0.1, -0.035], [0.1, -0.035]].map(([x, y], i) => (
-        <mesh key={i} position={[x, y, 0.01]}>
-          <cylinderGeometry args={[0.008, 0.008, 0.01, 6]} />
+        <mesh
+          key={i}
+          position={[x, y, 0.01]}
+          geometry={geometries.cylinder}
+          scale={[0.008, 0.01, 0.008]}
+        >
           <meshStandardMaterial color="#4a4a5a" metalness={0.9} roughness={0.2} />
         </mesh>
       ))}
@@ -1669,11 +1796,13 @@ function ScreenBackLighting({
   screenHeight,
   isHovered,
   isTapped,
+  geometries,
 }: {
   screenWidth: number;
   screenHeight: number;
   isHovered: boolean;
   isTapped: boolean;
+  geometries: ReturnType<typeof usePools>['geometries'];
 }) {
   const mainLightRef = useRef<THREE.PointLight>(null);
   const accentLight1Ref = useRef<THREE.PointLight>(null);
@@ -1731,8 +1860,11 @@ function ScreenBackLighting({
       />
 
       {/* Ambient glow plane behind screen */}
-      <mesh position={[0, 0, -0.1]}>
-        <planeGeometry args={[screenWidth * 1.3, screenHeight * 1.3]} />
+      <mesh
+        position={[0, 0, -0.1]}
+        geometry={geometries.plane}
+        scale={[screenWidth * 1.3, screenHeight * 1.3, 1]}
+      >
         <meshBasicMaterial
           color={mainColor}
           transparent
@@ -1742,12 +1874,18 @@ function ScreenBackLighting({
       </mesh>
 
       {/* Edge glow strips */}
-      <mesh position={[0, screenHeight * 0.55, 0]}>
-        <planeGeometry args={[screenWidth * 1.1, 0.15]} />
+      <mesh
+        position={[0, screenHeight * 0.55, 0]}
+        geometry={geometries.plane}
+        scale={[screenWidth * 1.1, 0.15, 1]}
+      >
         <meshBasicMaterial color={accentColor1} transparent opacity={0.3} />
       </mesh>
-      <mesh position={[0, -screenHeight * 0.55, 0]}>
-        <planeGeometry args={[screenWidth * 1.1, 0.15]} />
+      <mesh
+        position={[0, -screenHeight * 0.55, 0]}
+        geometry={geometries.plane}
+        scale={[screenWidth * 1.1, 0.15, 1]}
+      >
         <meshBasicMaterial color={accentColor2} transparent opacity={0.3} />
       </mesh>
     </group>

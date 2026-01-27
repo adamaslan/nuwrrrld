@@ -1,5 +1,8 @@
 import * as THREE from 'three';
 import type { IGeometryPool, IMaterialPool } from '@/components/three/pools';
+import type { ShipBlueprint } from '@/components/three/environment/ships/ShipBlueprint';
+import type { BuildingBlueprint } from '@/components/three/environment/buildings/BuildingBlueprint';
+import type { BackPanelBlueprint } from '@/components/three/BackPanelBlueprint';
 
 /**
  * 3D position/rotation tuple [x, y, z].
@@ -53,6 +56,8 @@ export interface ShipConfig {
   readonly direction: ShipDirection;
   /** Animation phase offset */
   readonly offset: number;
+  /** Seed for procedural variation (optional, defaults to index) */
+  readonly variantSeed?: number;
 }
 
 /**
@@ -67,6 +72,8 @@ export interface BuildingConfig {
   readonly windowColor: WindowColor;
   /** Whether building has antenna */
   readonly hasAntenna: boolean;
+  /** Seed for procedural variation (optional, defaults to index) */
+  readonly variantSeed?: number;
 }
 
 /**
@@ -89,6 +96,8 @@ export interface CyberpunkBuildingProps {
   readonly geometries: IGeometryPool;
   /** Pooled materials */
   readonly materials: IMaterialPool;
+  /** Seed for procedural variation (optional, defaults to index) */
+  readonly variantSeed?: number;
 }
 
 /**
@@ -152,3 +161,9 @@ export interface NeonSignConfig {
   /** Flicker speed */
   readonly flickerSpeed: number;
 }
+
+/**
+ * Re-export blueprint types for convenience.
+ * These are imported from their respective blueprint generator modules.
+ */
+export type { ShipBlueprint, BuildingBlueprint, BackPanelBlueprint };
