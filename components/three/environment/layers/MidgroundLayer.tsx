@@ -5,6 +5,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { getMeshBasicMaterial, getMeshStandardMaterial } from '@/lib/type-guards';
 import { SCENE_DIMENSIONS } from '@/config/constants';
+import { orbitalPosition, flickerIntensity } from '@/lib/scene-utils';
 
 /**
  * Midground layer containing floating platforms and drone swarms.
@@ -153,20 +154,20 @@ function DroneSwarm() {
     const time = state.clock.elapsedTime;
     dronesRef.current.children.forEach((drone, i) => {
       const config = drones[i];
-      drone.position.x =
-        config.basePos[0] + Math.cos(time * config.speed + config.phase) * config.orbitRadius;
-      drone.position.y =
-        config.basePos[1] + Math.sin(time * config.speed * 0.7 + config.phase) * 2;
-      drone.position.z =
-        config.basePos[2] +
-        Math.sin(time * config.speed + config.phase) * config.orbitRadius * 0.5;
+
+      // Use orbital position utility for smoother drone movement
+      const [x, , z] = orbitalPosition(time, config.orbitRadius, config.speed, config.phase);
+      drone.position.x = config.basePos[0] + x;
+      drone.position.z = config.basePos[2] + z * 0.5;
+      drone.position.y = config.basePos[1] + Math.sin(time * config.speed * 0.7 + config.phase) * 2;
       drone.rotation.y = time * 2;
+
       // Animate glow halo
       const glowMesh = drone.children[1] as THREE.Mesh;
       if (glowMesh) {
         const mat = getMeshBasicMaterial(glowMesh);
         if (mat) {
-          mat.opacity = 0.2 + Math.sin(time * 4 + i) * 0.1;
+          mat.opacity = flickerIntensity(time, 0.2, 0.1, 4, i);
         }
       }
     });

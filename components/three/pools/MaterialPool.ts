@@ -59,6 +59,16 @@ export interface IMaterialPool {
   // Transparent/volumetric materials
   readonly shaftCyan: THREE.MeshStandardMaterial;
   readonly shaftMagenta: THREE.MeshStandardMaterial;
+
+  // Back panel materials (TV Screen)
+  readonly backPanelDarkMetal: THREE.MeshStandardMaterial;
+  readonly backPanelVentGrille: THREE.MeshStandardMaterial;
+  readonly backPanelPowerUnit: THREE.MeshStandardMaterial;
+  readonly backPanelCoolingUnit: THREE.MeshStandardMaterial;
+  readonly backPanelCable: THREE.MeshStandardMaterial;
+  readonly backPanelBracket: THREE.MeshStandardMaterial;
+  readonly backPanelWarningLabel: THREE.MeshBasicMaterial;
+  readonly backPanelSerialPlate: THREE.MeshStandardMaterial;
 }
 
 /**
@@ -284,6 +294,46 @@ export function createMaterialPool(): IMaterialPool {
       side: THREE.DoubleSide,
       emissive: '#ff00ff',
       emissiveIntensity: 0.3,
+    }),
+
+    // Back panel materials (TV Screen)
+    backPanelDarkMetal: new THREE.MeshStandardMaterial({
+      color: '#1a1a24',
+      metalness: 0.85,
+      roughness: 0.4,
+    }),
+    backPanelVentGrille: new THREE.MeshStandardMaterial({
+      color: '#2a2a3a',
+      metalness: 0.9,
+      roughness: 0.3,
+    }),
+    backPanelPowerUnit: new THREE.MeshStandardMaterial({
+      color: '#0a0a12',
+      metalness: 0.8,
+      roughness: 0.5,
+    }),
+    backPanelCoolingUnit: new THREE.MeshStandardMaterial({
+      color: '#1e1e2a',
+      metalness: 0.7,
+      roughness: 0.6,
+    }),
+    backPanelCable: new THREE.MeshStandardMaterial({
+      color: '#0a0a0e',
+      metalness: 0.2,
+      roughness: 0.8,
+    }),
+    backPanelBracket: new THREE.MeshStandardMaterial({
+      color: '#2d2d3a',
+      metalness: 0.95,
+      roughness: 0.3,
+    }),
+    backPanelWarningLabel: new THREE.MeshBasicMaterial({
+      color: '#ffcc00',
+    }),
+    backPanelSerialPlate: new THREE.MeshStandardMaterial({
+      color: '#3a3a4a',
+      metalness: 0.9,
+      roughness: 0.2,
     }),
   };
 }

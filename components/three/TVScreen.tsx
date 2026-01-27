@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import type { ScreenConfig } from '@/config/mediaConfig';
 import { RESPONSIVE_SCALE, OPACITY, CYBERPUNK_COLORS } from '@/config/constants';
 import SideScreen from './SideScreen';
+import { usePools } from './pools';
 
 /**
  * Interaction timing constants for screen animations.
@@ -21,48 +22,6 @@ const INTERACTION_TIMING = {
 interface TVScreenProps {
   config: ScreenConfig;
 }
-
-// Industrial back panel materials
-const BACK_PANEL_MATERIALS = {
-  darkMetal: new THREE.MeshStandardMaterial({
-    color: '#1a1a24',
-    metalness: 0.85,
-    roughness: 0.4,
-  }),
-  ventGrille: new THREE.MeshStandardMaterial({
-    color: '#2a2a3a',
-    metalness: 0.9,
-    roughness: 0.3,
-  }),
-  powerUnit: new THREE.MeshStandardMaterial({
-    color: '#0a0a12',
-    metalness: 0.8,
-    roughness: 0.5,
-  }),
-  coolingUnit: new THREE.MeshStandardMaterial({
-    color: '#1e1e2a',
-    metalness: 0.7,
-    roughness: 0.6,
-  }),
-  cable: new THREE.MeshStandardMaterial({
-    color: '#0a0a0e',
-    metalness: 0.2,
-    roughness: 0.8,
-  }),
-  bracket: new THREE.MeshStandardMaterial({
-    color: '#2d2d3a',
-    metalness: 0.95,
-    roughness: 0.3,
-  }),
-  warningLabel: new THREE.MeshBasicMaterial({
-    color: '#ffcc00',
-  }),
-  serialPlate: new THREE.MeshStandardMaterial({
-    color: '#3a3a4a',
-    metalness: 0.9,
-    roughness: 0.2,
-  }),
-};
 
 function VideoMedia({ path }: { path: string }) {
   const { gl } = useThree();
@@ -145,6 +104,7 @@ export default function TVScreen({ config }: TVScreenProps) {
   const pulseRef = useRef<THREE.Mesh>(null);
 
   const responsiveScale = useResponsiveScale();
+  const { materials } = usePools();
 
   // Interactive state
   const [isHovered, setIsHovered] = useState(false);
@@ -366,7 +326,7 @@ export default function TVScreen({ config }: TVScreenProps) {
       <FrameAccentLights screenWidth={screenWidth} screenHeight={screenHeight} isHovered={isHovered} />
 
       {/* Industrial back panel with all components */}
-      <BackPanel screenWidth={screenWidth} screenHeight={screenHeight} screenId={config.id} />
+      <BackPanel screenWidth={screenWidth} screenHeight={screenHeight} screenId={config.id} materials={materials} />
 
       {/* Ambient lighting behind screen */}
       <ScreenBackLighting
@@ -533,10 +493,12 @@ function BackPanel({
   screenWidth,
   screenHeight,
   screenId,
+  materials,
 }: {
   screenWidth: number;
   screenHeight: number;
   screenId: number;
+  materials: ReturnType<typeof usePools>['materials'];
 }) {
   const panelDepth = -0.3;
   const panelThickness = 0.15;
@@ -546,29 +508,29 @@ function BackPanel({
       {/* Main back panel surface */}
       <mesh>
         <boxGeometry args={[screenWidth * 1.05, screenHeight * 1.05, panelThickness]} />
-        <primitive object={BACK_PANEL_MATERIALS.darkMetal} attach="material" />
+        <primitive object={materials.backPanelDarkMetal} attach="material" />
       </mesh>
 
       {/* Ventilation grilles */}
-      <VentilationGrilles screenWidth={screenWidth} screenHeight={screenHeight} />
+      <VentilationGrilles screenWidth={screenWidth} screenHeight={screenHeight} materials={materials} />
 
       {/* Power supply unit with LED indicators */}
-      <PowerSupplyUnit screenWidth={screenWidth} screenHeight={screenHeight} screenId={screenId} />
+      <PowerSupplyUnit screenWidth={screenWidth} screenHeight={screenHeight} screenId={screenId} materials={materials} />
 
       {/* Cable conduits */}
-      <CableConduits screenWidth={screenWidth} screenHeight={screenHeight} />
+      <CableConduits screenWidth={screenWidth} screenHeight={screenHeight} materials={materials} />
 
       {/* Cooling system */}
-      <CoolingSystem screenWidth={screenWidth} screenHeight={screenHeight} screenId={screenId} />
+      <CoolingSystem screenWidth={screenWidth} screenHeight={screenHeight} screenId={screenId} materials={materials} />
 
       {/* Structural brackets */}
-      <StructuralBrackets screenWidth={screenWidth} screenHeight={screenHeight} />
+      <StructuralBrackets screenWidth={screenWidth} screenHeight={screenHeight} materials={materials} />
 
       {/* Warning labels */}
-      <WarningLabels screenWidth={screenWidth} screenHeight={screenHeight} />
+      <WarningLabels screenWidth={screenWidth} screenHeight={screenHeight} materials={materials} />
 
       {/* Serial number plate */}
-      <SerialPlate screenWidth={screenWidth} screenHeight={screenHeight} screenId={screenId} />
+      <SerialPlate screenWidth={screenWidth} screenHeight={screenHeight} screenId={screenId} materials={materials} />
     </group>
   );
 }
@@ -576,9 +538,11 @@ function BackPanel({
 function VentilationGrilles({
   screenWidth,
   screenHeight,
+  materials,
 }: {
   screenWidth: number;
   screenHeight: number;
+  materials: ReturnType<typeof usePools>['materials'];
 }) {
   // Simplified: reduced bar count from 8 to 4 for RAM optimization
   const grilleBars = useMemo(() => {
@@ -604,12 +568,12 @@ function VentilationGrilles({
       <group position={[-screenWidth * 0.3, screenHeight * 0.35, 0.08]}>
         <mesh>
           <boxGeometry args={[grilleWidth + 0.1, grilleHeight + 0.1, 0.03]} />
-          <primitive object={BACK_PANEL_MATERIALS.ventGrille} attach="material" />
+          <primitive object={materials.backPanelVentGrille} attach="material" />
         </mesh>
         {grilleBars.map((bar, i) => (
           <mesh key={i} position={[0, bar.y, 0.04]}>
             <boxGeometry args={[grilleWidth * 0.9, 0.025, 0.02]} />
-            <primitive object={BACK_PANEL_MATERIALS.darkMetal} attach="material" />
+            <primitive object={materials.backPanelDarkMetal} attach="material" />
           </mesh>
         ))}
         <mesh position={[0, 0, -0.02]}>
@@ -622,12 +586,12 @@ function VentilationGrilles({
       <group position={[screenWidth * 0.3, screenHeight * 0.35, 0.08]}>
         <mesh>
           <boxGeometry args={[grilleWidth + 0.1, grilleHeight + 0.1, 0.03]} />
-          <primitive object={BACK_PANEL_MATERIALS.ventGrille} attach="material" />
+          <primitive object={materials.backPanelVentGrille} attach="material" />
         </mesh>
         {grilleBars.map((bar, i) => (
           <mesh key={i} position={[0, bar.y, 0.04]}>
             <boxGeometry args={[grilleWidth * 0.9, 0.025, 0.02]} />
-            <primitive object={BACK_PANEL_MATERIALS.darkMetal} attach="material" />
+            <primitive object={materials.backPanelDarkMetal} attach="material" />
           </mesh>
         ))}
         <mesh position={[0, 0, -0.02]}>
@@ -643,10 +607,12 @@ function PowerSupplyUnit({
   screenWidth,
   screenHeight,
   screenId,
+  materials,
 }: {
   screenWidth: number;
   screenHeight: number;
   screenId: number;
+  materials: ReturnType<typeof usePools>['materials'];
 }) {
   const ledsRef = useRef<THREE.Group>(null);
 
@@ -671,7 +637,7 @@ function PowerSupplyUnit({
       {/* Power unit box */}
       <mesh>
         <boxGeometry args={[unitWidth, unitHeight, 0.1]} />
-        <primitive object={BACK_PANEL_MATERIALS.powerUnit} attach="material" />
+        <primitive object={materials.backPanelPowerUnit} attach="material" />
       </mesh>
 
       {/* Power unit label area */}
@@ -697,7 +663,7 @@ function PowerSupplyUnit({
       {/* Power connector */}
       <mesh position={[unitWidth * 0.35, 0, 0.06]}>
         <boxGeometry args={[0.08, 0.06, 0.04]} />
-        <primitive object={BACK_PANEL_MATERIALS.cable} attach="material" />
+        <primitive object={materials.backPanelCable} attach="material" />
       </mesh>
     </group>
   );
@@ -706,9 +672,11 @@ function PowerSupplyUnit({
 function CableConduits({
   screenWidth,
   screenHeight,
+  materials,
 }: {
   screenWidth: number;
   screenHeight: number;
+  materials: ReturnType<typeof usePools>['materials'];
 }) {
   const conduitWidth = screenWidth * 0.7;
 
@@ -717,7 +685,7 @@ function CableConduits({
       {/* Main horizontal conduit */}
       <mesh>
         <boxGeometry args={[conduitWidth, 0.08, 0.05]} />
-        <primitive object={BACK_PANEL_MATERIALS.darkMetal} attach="material" />
+        <primitive object={materials.backPanelDarkMetal} attach="material" />
       </mesh>
 
       {/* Vertical cable runs - reduced from 4 to 2 for RAM optimization */}
@@ -725,7 +693,7 @@ function CableConduits({
         <group key={i} position={[screenWidth * xOffset, -screenHeight * 0.15, 0]}>
           <mesh>
             <boxGeometry args={[0.05, screenHeight * 0.25, 0.03]} />
-            <primitive object={BACK_PANEL_MATERIALS.cable} attach="material" />
+            <primitive object={materials.backPanelCable} attach="material" />
           </mesh>
         </group>
       ))}
@@ -737,10 +705,12 @@ function CoolingSystem({
   screenWidth,
   screenHeight,
   screenId,
+  materials,
 }: {
   screenWidth: number;
   screenHeight: number;
   screenId: number;
+  materials: ReturnType<typeof usePools>['materials'];
 }) {
   const fanRef = useRef<THREE.Mesh>(null);
 
@@ -759,13 +729,13 @@ function CoolingSystem({
       {/* Cooling unit housing */}
       <mesh>
         <boxGeometry args={[coolerWidth, coolerHeight, 0.12]} />
-        <primitive object={BACK_PANEL_MATERIALS.coolingUnit} attach="material" />
+        <primitive object={materials.backPanelCoolingUnit} attach="material" />
       </mesh>
 
       {/* Fan housing */}
       <mesh position={[0, 0, 0.07]}>
         <cylinderGeometry args={[coolerHeight * 0.35, coolerHeight * 0.35, 0.04, 16]} />
-        <primitive object={BACK_PANEL_MATERIALS.darkMetal} attach="material" />
+        <primitive object={materials.backPanelDarkMetal} attach="material" />
       </mesh>
 
       {/* Fan blades */}
@@ -777,7 +747,7 @@ function CoolingSystem({
       {/* Fan center hub */}
       <mesh position={[0, 0, 0.1]} rotation={[Math.PI / 2, 0, 0]}>
         <cylinderGeometry args={[0.04, 0.04, 0.02, 8]} />
-        <primitive object={BACK_PANEL_MATERIALS.bracket} attach="material" />
+        <primitive object={materials.backPanelBracket} attach="material" />
       </mesh>
 
       {/* Heat sink fins - reduced from 6 to 3 for RAM optimization */}
@@ -787,7 +757,7 @@ function CoolingSystem({
           position={[(i - 1) * (coolerWidth * 0.2), 0, 0.01]}
         >
           <boxGeometry args={[0.03, coolerHeight * 0.8, 0.1]} />
-          <primitive object={BACK_PANEL_MATERIALS.ventGrille} attach="material" />
+          <primitive object={materials.backPanelVentGrille} attach="material" />
         </mesh>
       ))}
     </group>
@@ -797,9 +767,11 @@ function CoolingSystem({
 function StructuralBrackets({
   screenWidth,
   screenHeight,
+  materials,
 }: {
   screenWidth: number;
   screenHeight: number;
+  materials: ReturnType<typeof usePools>['materials'];
 }) {
   return (
     <>
@@ -808,12 +780,12 @@ function StructuralBrackets({
         {/* Vertical strut */}
         <mesh position={[0, 0.05, 0]} rotation={[0, 0, -0.2]}>
           <boxGeometry args={[0.06, screenHeight * 0.15, 0.04]} />
-          <primitive object={BACK_PANEL_MATERIALS.bracket} attach="material" />
+          <primitive object={materials.backPanelBracket} attach="material" />
         </mesh>
         {/* Base plate */}
         <mesh position={[-0.05, -0.08, 0]}>
           <boxGeometry args={[0.15, 0.04, 0.06]} />
-          <primitive object={BACK_PANEL_MATERIALS.bracket} attach="material" />
+          <primitive object={materials.backPanelBracket} attach="material" />
         </mesh>
       </group>
 
@@ -821,18 +793,18 @@ function StructuralBrackets({
       <group position={[screenWidth * 0.45, -screenHeight * 0.42, 0.08]}>
         <mesh position={[0, 0.05, 0]} rotation={[0, 0, 0.2]}>
           <boxGeometry args={[0.06, screenHeight * 0.15, 0.04]} />
-          <primitive object={BACK_PANEL_MATERIALS.bracket} attach="material" />
+          <primitive object={materials.backPanelBracket} attach="material" />
         </mesh>
         <mesh position={[0.05, -0.08, 0]}>
           <boxGeometry args={[0.15, 0.04, 0.06]} />
-          <primitive object={BACK_PANEL_MATERIALS.bracket} attach="material" />
+          <primitive object={materials.backPanelBracket} attach="material" />
         </mesh>
       </group>
 
       {/* Top reinforcement bar */}
       <mesh position={[0, screenHeight * 0.48, 0.08]}>
         <boxGeometry args={[screenWidth * 0.8, 0.05, 0.04]} />
-        <primitive object={BACK_PANEL_MATERIALS.bracket} attach="material" />
+        <primitive object={materials.backPanelBracket} attach="material" />
       </mesh>
     </>
   );
@@ -841,9 +813,11 @@ function StructuralBrackets({
 function WarningLabels({
   screenWidth,
   screenHeight,
+  materials,
 }: {
   screenWidth: number;
   screenHeight: number;
+  materials: ReturnType<typeof usePools>['materials'];
 }) {
   return (
     <>
@@ -889,17 +863,19 @@ function SerialPlate({
   screenWidth,
   screenHeight,
   screenId,
+  materials,
 }: {
   screenWidth: number;
   screenHeight: number;
   screenId: number;
+  materials: ReturnType<typeof usePools>['materials'];
 }) {
   return (
     <group position={[screenWidth * 0.35, -screenHeight * 0.45, 0.08]}>
       {/* Metal plate */}
       <mesh>
         <boxGeometry args={[0.25, 0.1, 0.01]} />
-        <primitive object={BACK_PANEL_MATERIALS.serialPlate} attach="material" />
+        <primitive object={materials.backPanelSerialPlate} attach="material" />
       </mesh>
       {/* Embossed text effect - simplified as lines */}
       <mesh position={[0, 0.02, 0.006]}>
