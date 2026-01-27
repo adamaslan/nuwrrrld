@@ -96,6 +96,20 @@ export const SCREEN_CONFIGS: ScreenConfig[] = [
     rotation: [0.05, 0, 0],
     baseSize: 26,
     aspectRatio: 900 / 1600,
+    sidePanel: {
+      enabled: true,
+      position: 'right',
+      widthRatio: 0.85,
+      text: 'SURVEILLANCE NODE\n\nStatus: ACTIVE\nUplink: 98.7%\nFeed: PRIMARY',
+      textColor: '#00ff88',
+      textSize: 0.28,
+      textAlign: 'center',
+      backgroundColor: '#1a2a1e',
+      backgroundOpacity: 0.9,
+      glowEnabled: true,
+      glowColor: '#00ff88',
+      glowIntensity: 0.5,
+    },
   },
   {
     id: 2,
@@ -109,7 +123,7 @@ export const SCREEN_CONFIGS: ScreenConfig[] = [
     sidePanel: {
       enabled: true,
       position: 'right',
-      widthRatio: 0.15,
+      widthRatio: 0.85,
       text: 'LIVE FEED\n\nSystem Status: OK\nTemp: 52°C\nPower: 98%',
       textColor: '#00ffff',
       textSize: 0.25,
@@ -133,7 +147,7 @@ export const SCREEN_CONFIGS: ScreenConfig[] = [
     sidePanel: {
       enabled: true,
       position: 'left',
-      widthRatio: 0.2,
+      widthRatio: 0.85,
       text: 'PROJECT ALPHA\n\nProgress: 87%\nDeadline: Q2 2026',
       textColor: '#ff00ff',
       textSize: 0.28,

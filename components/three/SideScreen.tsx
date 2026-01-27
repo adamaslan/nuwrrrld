@@ -47,7 +47,7 @@ const SIDE_PANEL_DIMENSIONS = {
   /** Edge accent width ratio */
   EDGE_WIDTH_RATIO: 0.9,
   /** Side panel horizontal offset from screen */
-  HORIZONTAL_OFFSET: 0.05,
+  HORIZONTAL_OFFSET: 0.20,
 } as const;
 
 /**
@@ -211,6 +211,92 @@ function BackgroundImage({
       <planeGeometry args={[width, height]} />
       <meshBasicMaterial map={texture} transparent opacity={opacity} />
     </mesh>
+  );
+}
+
+/**
+ * ============================================================================
+ * CONNECTING PIPES CONSTANTS
+ * Industrial pipe dimensions and positioning
+ * ============================================================================
+ */
+const CONNECTING_PIPES = {
+  /** Pipe radius */
+  RADIUS: 0.015,
+  /** Pipe radial segments for cylinder geometry */
+  SEGMENTS: 6,
+  /** Pipe material color */
+  COLOR: '#0a0a0e',
+  /** Pipe metalness */
+  METALNESS: 0.2,
+  /** Pipe roughness */
+  ROUGHNESS: 0.8,
+  /** Vertical positions as ratio of screen height */
+  VERTICAL_POSITIONS: [-0.35, -0.15, 0.15, 0.35] as const,
+  /** Z-depth offset for pipes (in front of background, behind frame) */
+  Z_OFFSET: -0.02,
+} as const;
+
+/**
+ * ConnectingPipes - Industrial pipes spanning gap between screen and side panel
+ *
+ * Renders 4 thin horizontal cylinders connecting main screen to side panel.
+ * Pipes are positioned at equal vertical intervals for balanced aesthetic.
+ */
+function ConnectingPipes({
+  screenWidth,
+  screenHeight,
+  panelWidth,
+  position,
+  gap,
+}: {
+  screenWidth: number;
+  screenHeight: number;
+  panelWidth: number;
+  position: 'left' | 'right';
+  gap: number;
+}) {
+  // Calculate pipe length (gap between screen edge and panel start)
+  const pipeLength = gap;
+
+  // X position: center of gap
+  // For right panel: start at screen right edge + half gap
+  // For left panel: start at screen left edge - half gap
+  const xPosition = position === 'right'
+    ? (screenWidth / 2) + (gap / 2)
+    : -(screenWidth / 2) - (gap / 2);
+
+  // Create material for pipes (reuse for all 4 pipes)
+  const pipeMaterial = useMemo(
+    () =>
+      new THREE.MeshStandardMaterial({
+        color: CONNECTING_PIPES.COLOR,
+        metalness: CONNECTING_PIPES.METALNESS,
+        roughness: CONNECTING_PIPES.ROUGHNESS,
+      }),
+    []
+  );
+
+  return (
+    <group>
+      {CONNECTING_PIPES.VERTICAL_POSITIONS.map((yRatio, index) => (
+        <mesh
+          key={index}
+          position={[xPosition, screenHeight * yRatio, CONNECTING_PIPES.Z_OFFSET]}
+          rotation={[0, 0, Math.PI / 2]}
+          material={pipeMaterial}
+        >
+          <cylinderGeometry
+            args={[
+              CONNECTING_PIPES.RADIUS,
+              CONNECTING_PIPES.RADIUS,
+              pipeLength,
+              CONNECTING_PIPES.SEGMENTS,
+            ]}
+          />
+        </mesh>
+      ))}
+    </group>
   );
 }
 
@@ -382,6 +468,15 @@ export default function SideScreen({
           opacity={isHovered ? SIDE_PANEL_GLOW.SIDE_OPACITY_HOVER : SIDE_PANEL_GLOW.SIDE_OPACITY_IDLE}
         />
       </mesh>
+
+      {/* Connecting pipes spanning gap between screen and side panel */}
+      <ConnectingPipes
+        screenWidth={screenWidth}
+        screenHeight={screenHeight}
+        panelWidth={panelWidth}
+        position={config.position}
+        gap={SIDE_PANEL_DIMENSIONS.HORIZONTAL_OFFSET}
+      />
     </group>
   );
 }
