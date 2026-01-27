@@ -10,13 +10,671 @@ import SideScreen from './SideScreen';
 import { usePools } from './pools';
 
 /**
- * Interaction timing constants for screen animations.
+ * ============================================================================
+ * POSITIONING CONSTANTS
+ * Z-axis layering for proper rendering order (front to back)
+ * ============================================================================
+ */
+const ZPOSITION = {
+  /** Screen content layer */
+  SCREEN_CONTENT: 0.09,
+  /** Tap pulse ring */
+  TAP_PULSE: 0.085,
+  /** Hover highlight overlay */
+  HIGHLIGHT_OVERLAY: 0.082,
+  /** Scanline effect */
+  SCANLINE_EFFECT: 0.09,
+  /** Screen bezel/border glow */
+  BEZEL_GLOW: 0.075,
+  /** Metallic frame surface */
+  FRAME: 0.08,
+  /** Edge glow behind frame */
+  EDGE_GLOW: -0.05,
+  /** Corner accent lights */
+  CORNER_LIGHTS: 0.1,
+  /** Frame accent lights */
+  FRAME_ACCENT_LIGHTS: 0.1,
+  /** Back panel base layer */
+  BACK_PANEL_BASE: -0.3,
+  /** Back panel component layer */
+  BACK_PANEL_COMPONENT: 0.08,
+  /** Back panel inner details */
+  BACK_PANEL_INNER: 0.04,
+} as const;
+
+/**
+ * ============================================================================
+ * SCREEN FRAME GEOMETRY CONSTANTS
+ * Bezel dimensions and shape properties
+ * ============================================================================
+ */
+const FRAME_GEOMETRY = {
+  /** Bevel corner radius for smooth edges */
+  CORNER_BEVEL_RADIUS: 0.1,
+  /** Screen hole width ratio (0-1) */
+  HOLE_WIDTH_RATIO: 0.9,
+  /** Screen hole height ratio (0-1) */
+  HOLE_HEIGHT_RATIO: 0.85,
+  /** Extrude depth for 3D frame */
+  EXTRUDE_DEPTH: 0.15,
+  /** Bevel thickness on edges */
+  BEVEL_THICKNESS: 0.02,
+  /** Bevel size for chamfered edges */
+  BEVEL_SIZE: 0.02,
+  /** Number of bevel segments for smoothness */
+  BEVEL_SEGMENTS: 2,
+} as const;
+
+/**
+ * ============================================================================
+ * SCREEN FRAME DIMENSIONS
+ * Ratios for calculating frame size relative to screen
+ * ============================================================================
+ */
+const FRAME_DIMENSIONS = {
+  /** Frame width as ratio of screen width */
+  WIDTH_RATIO: 0.58,
+  /** Frame height as ratio of screen height */
+  HEIGHT_RATIO: 0.58,
+  /** Frame depth offset from screen */
+  DEPTH_OFFSET: -0.1,
+} as const;
+
+/**
+ * ============================================================================
+ * INTERACTIVE STATE ANIMATION TIMING
+ * Duration and speed values for animations (ms)
+ * ============================================================================
  */
 const INTERACTION_TIMING = {
-  /** Duration for tap scale reset (ms) */
+  /** Duration for tap scale reset back to normal */
   TAP_SCALE_RESET: 150,
-  /** Duration for tap state reset (ms) */
+  /** Duration for tap state reset to initial state */
   TAP_STATE_RESET: 400,
+  /** Scale factor when screen is tapped */
+  TAP_SCALE_FACTOR: 1.08,
+  /** Scale factor when screen is hovered */
+  HOVER_SCALE_FACTOR: 1.02,
+  /** Lerp speed for smooth scale animation (0-1) */
+  SCALE_LERP_SPEED: 0.15,
+} as const;
+
+/**
+ * ============================================================================
+ * GLOW AND LIGHT ANIMATION CONSTANTS
+ * Pulse and intensity values for glowing effects
+ * ============================================================================
+ */
+const GLOW_ANIMATION = {
+  /** Base glow intensity when not interacting */
+  BASE_INTENSITY_IDLE: 0.3,
+  /** Base glow intensity when hovered */
+  BASE_INTENSITY_HOVER: 0.5,
+  /** Base glow intensity when tapped */
+  BASE_INTENSITY_TAP: 1.0,
+  /** Pulse amount when idle */
+  PULSE_AMOUNT_IDLE: 0.1,
+  /** Pulse amount when hovered */
+  PULSE_AMOUNT_HOVER: 0.15,
+  /** Pulse amount when tapped */
+  PULSE_AMOUNT_TAP: 0.3,
+  /** Speed multiplier for glow pulse animation */
+  PULSE_SPEED: 2,
+} as const;
+
+/**
+ * ============================================================================
+ * SCANLINE EFFECT CONSTANTS
+ * Animation speed and appearance for CRT scanline overlay
+ * ============================================================================
+ */
+const SCANLINE = {
+  /** Speed multiplier for scanline movement */
+  MOVEMENT_SPEED: 0.5,
+  /** Height of scanline in world units */
+  HEIGHT: 0.02,
+  /** Opacity when screen idle */
+  OPACITY_IDLE: 0.03,
+  /** Opacity when screen hovered */
+  OPACITY_HOVER: 0.06,
+} as const;
+
+/**
+ * ============================================================================
+ * TAP PULSE RING ANIMATION
+ * Ring geometry and animation properties for tap feedback
+ * ============================================================================
+ */
+const TAP_PULSE_RING = {
+  /** Inner radius ratio relative to screen width */
+  INNER_RADIUS_RATIO: 0.3,
+  /** Outer radius ratio relative to screen width */
+  OUTER_RADIUS_RATIO: 0.35,
+  /** Number of segments for circle smoothness */
+  SEGMENTS: 32,
+  /** Maximum scale during pulse animation */
+  MAX_SCALE: 1.5,
+  /** Fade out speed for opacity */
+  FADE_SPEED: 1.2,
+  /** Pulse cycle duration */
+  PULSE_DURATION: 0.4,
+} as const;
+
+/**
+ * ============================================================================
+ * SCREEN HIGHLIGHT OVERLAY
+ * Colors and opacity for interactive highlights
+ * ============================================================================
+ */
+const HIGHLIGHT_OVERLAY = {
+  /** Opacity when hovered */
+  OPACITY_HOVER: 0.08,
+  /** Opacity when tapped */
+  OPACITY_TAP: 0.15,
+} as const;
+
+/**
+ * ============================================================================
+ * BEZEL GLOW EFFECT
+ * Border glow appearance and sizing
+ * ============================================================================
+ */
+const BEZEL_GLOW = {
+  /** Glow border width offset */
+  BORDER_OFFSET: 0.1,
+  /** Opacity when idle */
+  OPACITY_IDLE: 0.05,
+  /** Opacity when hovered */
+  OPACITY_HOVER: 0.1,
+} as const;
+
+/**
+ * ============================================================================
+ * BRACKET AND MOUNTING CONSTANTS
+ * Physical mounting bracket dimensions
+ * ============================================================================
+ */
+const MOUNTING_BRACKETS = {
+  /** Top bracket width */
+  TOP_WIDTH: 0.3,
+  /** Top bracket height */
+  TOP_HEIGHT: 0.15,
+  /** Top bracket depth */
+  TOP_DEPTH: 0.4,
+  /** Support rod/cable radius */
+  CABLE_RADIUS: 0.02,
+  /** Support cable height offset */
+  CABLE_HEIGHT_OFFSET: 0.6,
+  /** Cable segments for smoothness */
+  CABLE_SEGMENTS: 8,
+  /** Side plate width */
+  SIDE_PLATE_WIDTH: 0.08,
+  /** Side plate depth */
+  SIDE_PLATE_DEPTH: 0.2,
+  /** Side plate height ratio to screen */
+  SIDE_PLATE_HEIGHT_RATIO: 0.6,
+  /** Horizontal offset for top brackets */
+  TOP_BRACKET_HORIZONTAL_OFFSET: 0.4,
+  /** Vertical offset for top brackets */
+  TOP_BRACKET_VERTICAL_OFFSET: 0.1,
+  /** Horizontal offset for side plates */
+  SIDE_PLATE_HORIZONTAL_OFFSET: 0.52,
+} as const;
+
+/**
+ * ============================================================================
+ * CORNER ACCENT LIGHTS
+ * Properties for corner light decoration
+ * ============================================================================
+ */
+const CORNER_LIGHTS = {
+  /** Radius of each corner light circle */
+  RADIUS: 0.06,
+  /** Number of segments for circle geometry */
+  SEGMENTS: 16,
+  /** Offset distance from corner */
+  OFFSET_DISTANCE: 0.05,
+  /** Opacity for corner lights */
+  OPACITY: 0.8,
+  /** Number of animation phases (corners) */
+  ANIMATION_PHASES: 4,
+  /** Speed of blinking animation */
+  BLINK_SPEED: 4,
+  /** Opacity variation amplitude */
+  OPACITY_AMPLITUDE: 0.4,
+  /** Base opacity level */
+  BASE_OPACITY: 0.6,
+} as const;
+
+/**
+ * ============================================================================
+ * FRAME ACCENT LIGHT CONSTANTS
+ * Small indicator lights on frame edges
+ * ============================================================================
+ */
+const FRAME_ACCENT_LIGHTS = {
+  /** Radius of accent light circles */
+  RADIUS: 0.04,
+  /** Number of segments */
+  SEGMENTS: 8,
+  /** Horizontal position ratio */
+  HORIZONTAL_OFFSET_RATIO: 0.48,
+  /** Vertical position ratio */
+  VERTICAL_OFFSET_RATIO: 0.48,
+  /** Animation speed idle */
+  ANIMATION_SPEED_IDLE: 2,
+  /** Animation speed hover */
+  ANIMATION_SPEED_HOVER: 4,
+  /** Base opacity */
+  OPACITY: 0.8,
+  /** Animation offset for second light */
+  SECOND_LIGHT_PHASE_OFFSET: Math.PI,
+} as const;
+
+/**
+ * ============================================================================
+ * BRACKET MATERIAL COLORS
+ * Standard colors for mounting brackets
+ * ============================================================================
+ */
+const BRACKET_MATERIALS = {
+  /** Metallic bracket base color */
+  BRACKET_COLOR: '#2d2d3a',
+  /** Metallic property (0-1) */
+  METALNESS: 0.95,
+  /** Roughness property (0-1) */
+  ROUGHNESS: 0.4,
+  /** Frame color when idle */
+  FRAME_COLOR_IDLE: '#1a1a2e',
+  /** Frame color when hovered */
+  FRAME_COLOR_HOVER: '#2a2a3e',
+  /** Metalness for frame */
+  FRAME_METALNESS: 0.9,
+  /** Roughness for frame */
+  FRAME_ROUGHNESS: 0.3,
+  /** Env map intensity idle */
+  ENV_MAP_INTENSITY_IDLE: 0.5,
+  /** Env map intensity hover */
+  ENV_MAP_INTENSITY_HOVER: 0.8,
+} as const;
+
+/**
+ * ============================================================================
+ * BACK PANEL DIMENSIONS
+ * Industrial back panel component sizing
+ * ============================================================================
+ */
+const BACK_PANEL_DIMENSIONS = {
+  /** Back panel depth offset (negative = behind screen) */
+  DEPTH: -0.3,
+  /** Panel thickness */
+  THICKNESS: 0.15,
+  /** Panel width ratio to screen */
+  WIDTH_RATIO: 1.05,
+  /** Panel height ratio to screen */
+  HEIGHT_RATIO: 1.05,
+} as const;
+
+/**
+ * ============================================================================
+ * VENTILATION GRILLE CONSTANTS
+ * Cooling grille appearance and structure
+ * ============================================================================
+ */
+const VENTILATION_GRILLE = {
+  /** Width of grille area */
+  WIDTH_RATIO: 0.2,
+  /** Height of grille area */
+  HEIGHT_RATIO: 0.15,
+  /** Grille border thickness */
+  BORDER_THICKNESS: 0.03,
+  /** Grille depth from panel */
+  DEPTH: 0.08,
+  /** Grille bar height */
+  BAR_HEIGHT: 0.025,
+  /** Grille bar thickness */
+  BAR_THICKNESS: 0.02,
+  /** Number of bars (reduced for optimization) */
+  BAR_COUNT: 4,
+  /** Inner grille visualization opacity */
+  INNER_OPACITY: 0.05,
+  /** Grille view area ratio */
+  VIEW_AREA_RATIO: 0.8,
+  /** Horizontal offset for left grille */
+  LEFT_OFFSET: -0.3,
+  /** Horizontal offset for right grille */
+  RIGHT_OFFSET: 0.3,
+  /** Vertical offset for grille */
+  VERTICAL_OFFSET: 0.35,
+} as const;
+
+/**
+ * ============================================================================
+ * POWER SUPPLY UNIT CONSTANTS
+ * PSU dimensions and LED indicator properties
+ * ============================================================================
+ */
+const POWER_SUPPLY = {
+  /** PSU width ratio to screen */
+  WIDTH_RATIO: 0.35,
+  /** PSU height ratio to screen */
+  HEIGHT_RATIO: 0.12,
+  /** PSU depth */
+  DEPTH: 0.1,
+  /** Label area width ratio */
+  LABEL_AREA_WIDTH_RATIO: 0.8,
+  /** Label area height ratio */
+  LABEL_AREA_HEIGHT_RATIO: 0.3,
+  /** Vertical position on panel */
+  VERTICAL_POSITION: 0.15,
+  /** LED indicator depth */
+  LED_DEPTH: 0.06,
+  /** LED indicator radius */
+  LED_RADIUS: 0.03,
+  /** LED indicator segments */
+  LED_SEGMENTS: 8,
+  /** Number of LED indicators */
+  LED_COUNT: 5,
+  /** Spacing between LEDs */
+  LED_SPACING_RATIO: 0.15,
+  /** LED vertical offset from PSU center */
+  LED_VERTICAL_OFFSET: -0.2,
+  /** First 3 LEDs are green */
+  GREEN_LED_COUNT: 3,
+  /** Opacity for LEDs */
+  LED_OPACITY: 0.9,
+  /** Blink animation duration */
+  BLINK_DURATION: 3,
+  /** Blink animation threshold */
+  BLINK_THRESHOLD: 2,
+  /** Blink duration ms */
+  BLINK_CYCLE: 0.5,
+  /** Power connector horizontal offset */
+  CONNECTOR_HORIZONTAL_OFFSET: 0.35,
+  /** Power connector width */
+  CONNECTOR_WIDTH: 0.08,
+  /** Power connector height */
+  CONNECTOR_HEIGHT: 0.06,
+  /** Power connector depth */
+  CONNECTOR_DEPTH: 0.04,
+} as const;
+
+/**
+ * ============================================================================
+ * CABLE CONDUIT CONSTANTS
+ * Wiring and cable management appearance
+ * ============================================================================
+ */
+const CABLE_CONDUIT = {
+  /** Main conduit width ratio to screen */
+  WIDTH_RATIO: 0.7,
+  /** Main conduit height */
+  HEIGHT: 0.08,
+  /** Main conduit depth */
+  DEPTH: 0.05,
+  /** Vertical cable width */
+  VERTICAL_CABLE_WIDTH: 0.05,
+  /** Vertical cable depth */
+  VERTICAL_CABLE_DEPTH: 0.03,
+  /** Vertical cable height ratio */
+  VERTICAL_CABLE_HEIGHT_RATIO: 0.25,
+  /** Number of vertical cable runs (reduced for optimization) */
+  VERTICAL_CABLE_COUNT: 2,
+  /** Vertical cable offset positions */
+  VERTICAL_CABLE_OFFSETS: [-0.2, 0.2] as const,
+  /** Vertical cable vertical position */
+  VERTICAL_CABLE_VERTICAL_OFFSET: -0.15,
+} as const;
+
+/**
+ * ============================================================================
+ * COOLING SYSTEM CONSTANTS
+ * Fan and heat sink dimensions and animation
+ * ============================================================================
+ */
+const COOLING_SYSTEM = {
+  /** Cooler width ratio to screen */
+  WIDTH_RATIO: 0.5,
+  /** Cooler height ratio to screen */
+  HEIGHT_RATIO: 0.18,
+  /** Cooler depth */
+  DEPTH: 0.12,
+  /** Vertical position on panel */
+  VERTICAL_POSITION: -0.32,
+  /** Cooler depth from panel */
+  COOLER_DEPTH: 0.07,
+  /** Fan housing radius ratio */
+  FAN_RADIUS_RATIO: 0.35,
+  /** Fan housing height */
+  FAN_HOUSING_HEIGHT: 0.04,
+  /** Fan housing segments */
+  FAN_HOUSING_SEGMENTS: 16,
+  /** Fan blades major radius ratio */
+  FAN_BLADES_MAJOR_RADIUS_RATIO: 0.25,
+  /** Fan blades minor radius */
+  FAN_BLADES_MINOR_RADIUS: 0.015,
+  /** Fan rotation speed */
+  FAN_ROTATION_SPEED: 3,
+  /** Fan hub radius */
+  FAN_HUB_RADIUS: 0.04,
+  /** Fan hub height */
+  FAN_HUB_HEIGHT: 0.02,
+  /** Heat sink fin count (reduced for optimization) */
+  HEAT_SINK_FIN_COUNT: 3,
+  /** Heat sink fin width */
+  HEAT_SINK_FIN_WIDTH: 0.03,
+  /** Heat sink fin height ratio */
+  HEAT_SINK_FIN_HEIGHT_RATIO: 0.8,
+  /** Heat sink fin depth */
+  HEAT_SINK_FIN_DEPTH: 0.1,
+  /** Heat sink fin spacing ratio */
+  HEAT_SINK_FIN_SPACING_RATIO: 0.2,
+} as const;
+
+/**
+ * ============================================================================
+ * STRUCTURAL BRACKET CONSTANTS
+ * Back panel support bracket dimensions
+ * ============================================================================
+ */
+const STRUCTURAL_BRACKETS = {
+  /** Left bracket horizontal offset */
+  LEFT_HORIZONTAL_OFFSET: -0.45,
+  /** Right bracket horizontal offset */
+  RIGHT_HORIZONTAL_OFFSET: 0.45,
+  /** Bracket vertical position */
+  VERTICAL_POSITION: -0.42,
+  /** Bracket depth */
+  DEPTH: 0.08,
+  /** Vertical strut thickness */
+  STRUT_WIDTH: 0.06,
+  /** Vertical strut height ratio */
+  STRUT_HEIGHT_RATIO: 0.15,
+  /** Base plate width */
+  BASE_PLATE_WIDTH: 0.15,
+  /** Base plate height */
+  BASE_PLATE_HEIGHT: 0.04,
+  /** Base plate depth */
+  BASE_PLATE_DEPTH: 0.06,
+  /** Left bracket strut rotation */
+  LEFT_STRUT_ROTATION: -0.2,
+  /** Right bracket strut rotation */
+  RIGHT_STRUT_ROTATION: 0.2,
+  /** Base plate offset */
+  BASE_PLATE_OFFSET: -0.05,
+  /** Base plate right offset */
+  BASE_PLATE_RIGHT_OFFSET: 0.05,
+  /** Top reinforcement width ratio */
+  TOP_BAR_WIDTH_RATIO: 0.8,
+  /** Top reinforcement height */
+  TOP_BAR_HEIGHT: 0.05,
+  /** Top reinforcement vertical position */
+  TOP_BAR_VERTICAL_POSITION: 0.48,
+} as const;
+
+/**
+ * ============================================================================
+ * WARNING LABEL CONSTANTS
+ * Industrial warning signs and safety labels
+ * ============================================================================
+ */
+const WARNING_LABELS = {
+  /** High voltage label width */
+  HV_LABEL_WIDTH: 0.2,
+  /** High voltage label height */
+  HV_LABEL_HEIGHT: 0.08,
+  /** Caution label width */
+  CAUTION_LABEL_WIDTH: 0.15,
+  /** Caution label height */
+  CAUTION_LABEL_HEIGHT: 0.06,
+  /** Stripe thickness */
+  STRIPE_THICKNESS: 0.02,
+  /** Exclamation mark width */
+  EXCLAMATION_WIDTH: 0.015,
+  /** Exclamation mark height */
+  EXCLAMATION_HEIGHT: 0.03,
+  /** Exclamation dot radius */
+  EXCLAMATION_DOT_RADIUS: 0.008,
+  /** Label vertical position */
+  VERTICAL_POSITION: 0.1,
+  /** Left label horizontal position */
+  LEFT_LABEL_HORIZONTAL_POSITION: -0.42,
+  /** Right label horizontal position */
+  RIGHT_LABEL_HORIZONTAL_POSITION: 0.42,
+  /** Depth offset */
+  DEPTH_OFFSET: 0.08,
+  /** Text depth offset */
+  TEXT_DEPTH_OFFSET: 0.001,
+} as const;
+
+/**
+ * ============================================================================
+ * SERIAL PLATE CONSTANTS
+ * Device identification and serial number plate
+ * ============================================================================
+ */
+const SERIAL_PLATE = {
+  /** Plate width */
+  PLATE_WIDTH: 0.25,
+  /** Plate height */
+  PLATE_HEIGHT: 0.1,
+  /** Plate thickness */
+  PLATE_THICKNESS: 0.01,
+  /** Text line 1 width */
+  TEXT_LINE_1_WIDTH: 0.2,
+  /** Text line 1 height */
+  TEXT_LINE_1_HEIGHT: 0.015,
+  /** Text line 2 width */
+  TEXT_LINE_2_WIDTH: 0.18,
+  /** Text line 2 height */
+  TEXT_LINE_2_HEIGHT: 0.015,
+  /** Text depth offset */
+  TEXT_DEPTH_OFFSET: 0.006,
+  /** Screw radius */
+  SCREW_RADIUS: 0.008,
+  /** Screw depth */
+  SCREW_DEPTH: 0.01,
+  /** Screw segments */
+  SCREW_SEGMENTS: 6,
+  /** Horizontal position on panel */
+  HORIZONTAL_POSITION: 0.35,
+  /** Vertical position on panel */
+  VERTICAL_POSITION: -0.45,
+  /** Depth offset from panel */
+  DEPTH_OFFSET: 0.08,
+  /** Screw positions offsets */
+  SCREW_OFFSET_X: 0.1,
+  /** Screw positions offsets Y */
+  SCREW_OFFSET_Y: 0.035,
+} as const;
+
+/**
+ * ============================================================================
+ * SCREEN BACK LIGHTING CONSTANTS
+ * Ambient and accent lighting behind screen
+ * ============================================================================
+ */
+const SCREEN_BACK_LIGHTING = {
+  /** Main light depth position */
+  MAIN_LIGHT_DEPTH: -0.5,
+  /** Main light idle intensity */
+  MAIN_LIGHT_INTENSITY_IDLE: 1.2,
+  /** Main light hover intensity */
+  MAIN_LIGHT_INTENSITY_HOVER: 2,
+  /** Main light tap intensity */
+  MAIN_LIGHT_INTENSITY_TAP: 3,
+  /** Accent light intensity */
+  ACCENT_LIGHT_INTENSITY: 0.7,
+  /** Light decay rate */
+  LIGHT_DECAY: 2,
+  /** Main light distance multiplier */
+  MAIN_LIGHT_DISTANCE_RATIO: 2,
+  /** Accent light distance multiplier */
+  ACCENT_LIGHT_DISTANCE_RATIO: 1.5,
+  /** Accent light vertical offset ratio */
+  ACCENT_LIGHT_VERTICAL_OFFSET_RATIO: 0.4,
+  /** Pulse speed idle */
+  PULSE_SPEED_IDLE: 1.5,
+  /** Pulse speed hover */
+  PULSE_SPEED_HOVER: 3,
+  /** Pulse speed tap */
+  PULSE_SPEED_TAP: 6,
+  /** Pulse amplitude */
+  PULSE_AMPLITUDE: 0.3,
+  /** Accent light pulse amplitude */
+  ACCENT_PULSE_AMPLITUDE: 0.2,
+  /** Ambient glow plane size ratio */
+  AMBIENT_GLOW_RATIO: 1.3,
+  /** Ambient glow opacity idle */
+  AMBIENT_GLOW_OPACITY_IDLE: 0.08,
+  /** Ambient glow opacity hover */
+  AMBIENT_GLOW_OPACITY_HOVER: 0.15,
+  /** Ambient glow opacity tap */
+  AMBIENT_GLOW_OPACITY_TAP: 0.2,
+  /** Edge glow strip vertical position ratio */
+  EDGE_GLOW_VERTICAL_OFFSET_RATIO: 0.55,
+  /** Edge glow strip width ratio */
+  EDGE_GLOW_WIDTH_RATIO: 1.1,
+  /** Edge glow strip height */
+  EDGE_GLOW_HEIGHT: 0.15,
+  /** Edge glow opacity */
+  EDGE_GLOW_OPACITY: 0.3,
+  /** Accent light phase offset 1 */
+  ACCENT_PHASE_OFFSET_1: 1,
+  /** Accent light phase offset 2 */
+  ACCENT_PHASE_OFFSET_2: 2,
+} as const;
+
+/**
+ * ============================================================================
+ * TEXTURE AND VIDEO CONSTANTS
+ * Media filtering and color space settings
+ * ============================================================================
+ */
+const TEXTURE_SETTINGS = {
+  /** Cross origin setting for video textures */
+  CROSS_ORIGIN: 'anonymous' as const,
+  /** Enable texture loop */
+  LOOP: true,
+  /** Mute video */
+  MUTED: true,
+  /** Auto-start video */
+  START: true,
+  /** Generate mipmaps for images */
+  GENERATE_MIPMAPS: false,
+} as const;
+
+/**
+ * ============================================================================
+ * COLOR CONSTANTS
+ * Standard colors used throughout the screen
+ * ============================================================================
+ */
+const SCREEN_COLORS = {
+  /** Fallback background when media fails */
+  FALLBACK_BACKGROUND: '#111118',
+  /** Outline color for text */
+  TEXT_OUTLINE_COLOR: '#000000',
 } as const;
 
 interface TVScreenProps {
@@ -26,10 +684,10 @@ interface TVScreenProps {
 function VideoMedia({ path }: { path: string }) {
   const { gl } = useThree();
   const texture = useVideoTexture(path, {
-    loop: true,
-    muted: true,
-    start: true,
-    crossOrigin: 'anonymous',
+    loop: TEXTURE_SETTINGS.LOOP,
+    muted: TEXTURE_SETTINGS.MUTED,
+    start: TEXTURE_SETTINGS.START,
+    crossOrigin: TEXTURE_SETTINGS.CROSS_ORIGIN,
   });
 
   useEffect(() => {
@@ -57,7 +715,7 @@ function ImageMedia({ path }: { path: string }) {
       texture.magFilter = THREE.LinearFilter;
       texture.anisotropy = gl.capabilities.getMaxAnisotropy();
       texture.colorSpace = THREE.SRGBColorSpace;
-      texture.generateMipmaps = false;
+      texture.generateMipmaps = TEXTURE_SETTINGS.GENERATE_MIPMAPS;
       texture.needsUpdate = true;
     }
   }, [texture, gl]);
@@ -76,7 +734,7 @@ function ScreenMedia({ type, path }: { type: 'image' | 'video'; path: string }) 
 
 function FallbackMaterial() {
   return (
-    <meshBasicMaterial color="#111118" />
+    <meshBasicMaterial color={SCREEN_COLORS.FALLBACK_BACKGROUND} />
   );
 }
 
@@ -115,14 +773,14 @@ export default function TVScreen({ config }: TVScreenProps) {
   // Calculate screen dimensions from aspect ratio (no distortion)
   const screenHeight = config.baseSize * responsiveScale;
   const screenWidth = screenHeight * config.aspectRatio;
-  const frameWidth = screenWidth * 0.58;
-  const frameHeight = screenHeight * 0.58;
+  const frameWidth = screenWidth * FRAME_DIMENSIONS.WIDTH_RATIO;
+  const frameHeight = screenHeight * FRAME_DIMENSIONS.HEIGHT_RATIO;
 
   const frameGeometry = useMemo(() => {
     const shape = new THREE.Shape();
     const w = frameWidth;
     const h = frameHeight;
-    const bevel = 0.1;
+    const bevel = FRAME_GEOMETRY.CORNER_BEVEL_RADIUS;
 
     shape.moveTo(-w + bevel, -h);
     shape.lineTo(w - bevel, -h);
@@ -134,8 +792,8 @@ export default function TVScreen({ config }: TVScreenProps) {
     shape.lineTo(-w, -h + bevel);
     shape.quadraticCurveTo(-w, -h, -w + bevel, -h);
 
-    const holeW = w * 0.9;
-    const holeH = h * 0.85;
+    const holeW = w * FRAME_GEOMETRY.HOLE_WIDTH_RATIO;
+    const holeH = h * FRAME_GEOMETRY.HOLE_HEIGHT_RATIO;
     const hole = new THREE.Path();
     hole.moveTo(-holeW, -holeH);
     hole.lineTo(holeW, -holeH);
@@ -144,20 +802,20 @@ export default function TVScreen({ config }: TVScreenProps) {
     shape.holes.push(hole);
 
     return new THREE.ExtrudeGeometry(shape, {
-      depth: 0.15,
+      depth: FRAME_GEOMETRY.EXTRUDE_DEPTH,
       bevelEnabled: true,
-      bevelThickness: 0.02,
-      bevelSize: 0.02,
-      bevelSegments: 2,
+      bevelThickness: FRAME_GEOMETRY.BEVEL_THICKNESS,
+      bevelSize: FRAME_GEOMETRY.BEVEL_SIZE,
+      bevelSegments: FRAME_GEOMETRY.BEVEL_SEGMENTS,
     });
   }, [frameWidth, frameHeight]);
 
   const bracketMaterial = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        color: '#2d2d3a',
-        metalness: 0.95,
-        roughness: 0.4,
+        color: BRACKET_MATERIALS.BRACKET_COLOR,
+        metalness: BRACKET_MATERIALS.METALNESS,
+        roughness: BRACKET_MATERIALS.ROUGHNESS,
       }),
     []
   );
@@ -166,7 +824,7 @@ export default function TVScreen({ config }: TVScreenProps) {
   const handleTap = useCallback((e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
     setIsTapped(true);
-    setTapScale(1.08);
+    setTapScale(INTERACTION_TIMING.TAP_SCALE_FACTOR);
     setGlowIntensity(1);
 
     // Reset after animation
@@ -200,32 +858,46 @@ export default function TVScreen({ config }: TVScreenProps) {
 
     // Animate glow
     if (glowRef.current) {
-      const baseIntensity = isTapped ? glowIntensity : (isHovered ? 0.5 : 0.3);
-      const pulseAmount = isTapped ? 0.3 : (isHovered ? 0.15 : 0.1);
-      const intensity = baseIntensity + Math.sin(time * 2 + config.id) * pulseAmount;
+      const baseIntensity = isTapped
+        ? GLOW_ANIMATION.BASE_INTENSITY_TAP
+        : isHovered
+          ? GLOW_ANIMATION.BASE_INTENSITY_HOVER
+          : GLOW_ANIMATION.BASE_INTENSITY_IDLE;
+      const pulseAmount = isTapped
+        ? GLOW_ANIMATION.PULSE_AMOUNT_TAP
+        : isHovered
+          ? GLOW_ANIMATION.PULSE_AMOUNT_HOVER
+          : GLOW_ANIMATION.PULSE_AMOUNT_IDLE;
+      const intensity =
+        baseIntensity +
+        Math.sin(time * GLOW_ANIMATION.PULSE_SPEED + config.id) * pulseAmount;
       (glowRef.current.material as THREE.MeshBasicMaterial).opacity = intensity;
     }
 
     // Animate scanline
     if (scanlineRef.current) {
       scanlineRef.current.position.y =
-        ((time * 0.5 + config.id) % 1) * screenHeight - screenHeight / 2;
+        ((time * SCANLINE.MOVEMENT_SPEED + config.id) % 1) * screenHeight -
+        screenHeight / 2;
     }
 
     // Animate pulse ring on tap
     if (pulseRef.current && isTapped) {
-      const pulseScale = 1 + (time % 0.4) * 0.5;
+      const pulseScale =
+        1 + ((time % TAP_PULSE_RING.PULSE_DURATION) / TAP_PULSE_RING.PULSE_DURATION) * (TAP_PULSE_RING.MAX_SCALE - 1);
       pulseRef.current.scale.set(pulseScale, pulseScale, 1);
-      (pulseRef.current.material as THREE.MeshBasicMaterial).opacity =
-        Math.max(0, 0.5 - (time % 0.4) * 1.2);
+      (pulseRef.current.material as THREE.MeshBasicMaterial).opacity = Math.max(
+        0,
+        0.5 - ((time % TAP_PULSE_RING.PULSE_DURATION) / TAP_PULSE_RING.PULSE_DURATION) * TAP_PULSE_RING.FADE_SPEED
+      );
     }
 
     // Smooth scale animation
     if (groupRef.current) {
-      const targetScale = tapScale * (isHovered ? 1.02 : 1);
+      const targetScale = tapScale * (isHovered ? INTERACTION_TIMING.HOVER_SCALE_FACTOR : 1);
       groupRef.current.scale.lerp(
         new THREE.Vector3(targetScale, targetScale, targetScale),
-        0.15
+        INTERACTION_TIMING.SCALE_LERP_SPEED
       );
     }
   });
@@ -243,7 +915,7 @@ export default function TVScreen({ config }: TVScreenProps) {
       {/* Interactive screen surface */}
       <mesh
         ref={screenMeshRef}
-        position={[0, 0, 0.08]}
+        position={[0, 0, ZPOSITION.SCREEN_CONTENT]}
         onClick={handleTap}
         onPointerEnter={handlePointerEnter}
         onPointerLeave={handlePointerLeave}
@@ -256,53 +928,81 @@ export default function TVScreen({ config }: TVScreenProps) {
 
       {/* Tap pulse effect */}
       {isTapped && (
-        <mesh ref={pulseRef} position={[0, 0, 0.085]}>
-          <ringGeometry args={[screenWidth * 0.3, screenWidth * 0.35, 32]} />
-          <meshBasicMaterial color="#ff00ff" transparent opacity={0.5} side={THREE.DoubleSide} />
+        <mesh ref={pulseRef} position={[0, 0, ZPOSITION.TAP_PULSE]}>
+          <ringGeometry
+            args={[
+              screenWidth * TAP_PULSE_RING.INNER_RADIUS_RATIO,
+              screenWidth * TAP_PULSE_RING.OUTER_RADIUS_RATIO,
+              TAP_PULSE_RING.SEGMENTS,
+            ]}
+          />
+          <meshBasicMaterial color={CYBERPUNK_COLORS.MAGENTA} transparent opacity={0.5} side={THREE.DoubleSide} />
         </mesh>
       )}
 
       {/* Hover/tap highlight overlay */}
       {(isHovered || isTapped) && (
-        <mesh position={[0, 0, 0.082]}>
+        <mesh position={[0, 0, ZPOSITION.HIGHLIGHT_OVERLAY]}>
           <planeGeometry args={[screenWidth, screenHeight]} />
           <meshBasicMaterial
-            color={isTapped ? '#ff00ff' : '#00ffff'}
+            color={isTapped ? CYBERPUNK_COLORS.MAGENTA : CYBERPUNK_COLORS.CYAN}
             transparent
-            opacity={isTapped ? 0.15 : 0.08}
+            opacity={isTapped ? HIGHLIGHT_OVERLAY.OPACITY_TAP : HIGHLIGHT_OVERLAY.OPACITY_HOVER}
           />
         </mesh>
       )}
 
       {/* Scanline effect overlay */}
-      <mesh ref={scanlineRef} position={[0, 0, 0.09]}>
-        <planeGeometry args={[screenWidth, 0.02]} />
-        <meshBasicMaterial color="#ffffff" transparent opacity={isHovered ? 0.06 : 0.03} />
+      <mesh ref={scanlineRef} position={[0, 0, ZPOSITION.SCANLINE_EFFECT]}>
+        <planeGeometry args={[screenWidth, SCANLINE.HEIGHT]} />
+        <meshBasicMaterial
+          color="#ffffff"
+          transparent
+          opacity={isHovered ? SCANLINE.OPACITY_HOVER : SCANLINE.OPACITY_IDLE}
+        />
       </mesh>
 
       {/* Screen bezel/border glow */}
-      <mesh position={[0, 0, 0.075]}>
-        <planeGeometry args={[screenWidth + 0.1, screenHeight + 0.1]} />
+      <mesh position={[0, 0, ZPOSITION.BEZEL_GLOW]}>
+        <planeGeometry
+          args={[
+            screenWidth + BEZEL_GLOW.BORDER_OFFSET,
+            screenHeight + BEZEL_GLOW.BORDER_OFFSET,
+          ]}
+        />
         <meshBasicMaterial
           color={bezelColor}
           transparent
-          opacity={isHovered ? 0.1 : 0.05}
+          opacity={isHovered ? BEZEL_GLOW.OPACITY_HOVER : BEZEL_GLOW.OPACITY_IDLE}
         />
       </mesh>
 
       {/* Metallic frame */}
       <mesh geometry={frameGeometry}>
         <meshStandardMaterial
-          color={isHovered ? '#2a2a3e' : '#1a1a2e'}
-          metalness={0.9}
-          roughness={0.3}
-          envMapIntensity={isHovered ? 0.8 : 0.5}
+          color={
+            isHovered
+              ? BRACKET_MATERIALS.FRAME_COLOR_HOVER
+              : BRACKET_MATERIALS.FRAME_COLOR_IDLE
+          }
+          metalness={BRACKET_MATERIALS.FRAME_METALNESS}
+          roughness={BRACKET_MATERIALS.FRAME_ROUGHNESS}
+          envMapIntensity={
+            isHovered
+              ? BRACKET_MATERIALS.ENV_MAP_INTENSITY_HOVER
+              : BRACKET_MATERIALS.ENV_MAP_INTENSITY_IDLE
+          }
         />
       </mesh>
 
       {/* Edge glow behind frame */}
-      <mesh ref={glowRef} position={[0, 0, -0.05]}>
-        <planeGeometry args={[screenWidth * 1.15, screenHeight * 1.15]} />
+      <mesh ref={glowRef} position={[0, 0, ZPOSITION.EDGE_GLOW]}>
+        <planeGeometry
+          args={[
+            screenWidth * 1.15,
+            screenHeight * 1.15,
+          ]}
+        />
         <meshBasicMaterial
           color={glowColor}
           transparent
@@ -369,27 +1069,30 @@ function CornerLights({
       lightsRef.current.children.forEach((child, i) => {
         const mesh = child as THREE.Mesh;
         const mat = mesh.material as THREE.MeshBasicMaterial;
-        mat.opacity = 0.6 + Math.sin(time * 4 + i * Math.PI / 2) * 0.4;
+        mat.opacity =
+          CORNER_LIGHTS.BASE_OPACITY +
+          Math.sin(time * CORNER_LIGHTS.BLINK_SPEED + (i * Math.PI) / (CORNER_LIGHTS.ANIMATION_PHASES / 2)) *
+            CORNER_LIGHTS.OPACITY_AMPLITUDE;
       });
     }
   });
 
   if (!isHovered && !isTapped) return null;
 
-  const color = isTapped ? '#ff00ff' : '#00ffff';
+  const color = isTapped ? CYBERPUNK_COLORS.MAGENTA : CYBERPUNK_COLORS.CYAN;
   const corners = [
-    [-screenWidth / 2 - 0.05, screenHeight / 2 + 0.05],
-    [screenWidth / 2 + 0.05, screenHeight / 2 + 0.05],
-    [-screenWidth / 2 - 0.05, -screenHeight / 2 - 0.05],
-    [screenWidth / 2 + 0.05, -screenHeight / 2 - 0.05],
+    [-screenWidth / 2 - CORNER_LIGHTS.OFFSET_DISTANCE, screenHeight / 2 + CORNER_LIGHTS.OFFSET_DISTANCE],
+    [screenWidth / 2 + CORNER_LIGHTS.OFFSET_DISTANCE, screenHeight / 2 + CORNER_LIGHTS.OFFSET_DISTANCE],
+    [-screenWidth / 2 - CORNER_LIGHTS.OFFSET_DISTANCE, -screenHeight / 2 - CORNER_LIGHTS.OFFSET_DISTANCE],
+    [screenWidth / 2 + CORNER_LIGHTS.OFFSET_DISTANCE, -screenHeight / 2 - CORNER_LIGHTS.OFFSET_DISTANCE],
   ];
 
   return (
     <group ref={lightsRef}>
       {corners.map(([x, y], i) => (
-        <mesh key={i} position={[x, y, 0.1]}>
-          <circleGeometry args={[0.06, 16]} />
-          <meshBasicMaterial color={color} transparent opacity={0.8} />
+        <mesh key={i} position={[x, y, ZPOSITION.CORNER_LIGHTS]}>
+          <circleGeometry args={[CORNER_LIGHTS.RADIUS, CORNER_LIGHTS.SEGMENTS]} />
+          <meshBasicMaterial color={color} transparent opacity={CORNER_LIGHTS.OPACITY} />
         </mesh>
       ))}
     </group>
@@ -409,38 +1112,98 @@ function MountingBrackets({
     <>
       {/* Top brackets */}
       <mesh
-        position={[-screenWidth * 0.4, screenHeight * 0.5 + 0.1, -0.1]}
+        position={[
+          -screenWidth * MOUNTING_BRACKETS.TOP_BRACKET_HORIZONTAL_OFFSET,
+          screenHeight * 0.5 + MOUNTING_BRACKETS.TOP_BRACKET_VERTICAL_OFFSET,
+          FRAME_DIMENSIONS.DEPTH_OFFSET,
+        ]}
         material={material}
       >
-        <boxGeometry args={[0.3, 0.15, 0.4]} />
+        <boxGeometry
+          args={[
+            MOUNTING_BRACKETS.TOP_WIDTH,
+            MOUNTING_BRACKETS.TOP_HEIGHT,
+            MOUNTING_BRACKETS.TOP_DEPTH,
+          ]}
+        />
       </mesh>
       <mesh
-        position={[screenWidth * 0.4, screenHeight * 0.5 + 0.1, -0.1]}
+        position={[
+          screenWidth * MOUNTING_BRACKETS.TOP_BRACKET_HORIZONTAL_OFFSET,
+          screenHeight * 0.5 + MOUNTING_BRACKETS.TOP_BRACKET_VERTICAL_OFFSET,
+          FRAME_DIMENSIONS.DEPTH_OFFSET,
+        ]}
         material={material}
       >
-        <boxGeometry args={[0.3, 0.15, 0.4]} />
+        <boxGeometry
+          args={[
+            MOUNTING_BRACKETS.TOP_WIDTH,
+            MOUNTING_BRACKETS.TOP_HEIGHT,
+            MOUNTING_BRACKETS.TOP_DEPTH,
+          ]}
+        />
       </mesh>
 
       {/* Support cables/rods */}
       <mesh
-        position={[-screenWidth * 0.4, screenHeight * 0.5 + 0.6, -0.1]}
+        position={[
+          -screenWidth * MOUNTING_BRACKETS.TOP_BRACKET_HORIZONTAL_OFFSET,
+          screenHeight * 0.5 + MOUNTING_BRACKETS.CABLE_HEIGHT_OFFSET,
+          FRAME_DIMENSIONS.DEPTH_OFFSET,
+        ]}
         material={material}
       >
-        <cylinderGeometry args={[0.02, 0.02, 1, 8]} />
+        <cylinderGeometry
+          args={[
+            MOUNTING_BRACKETS.CABLE_RADIUS,
+            MOUNTING_BRACKETS.CABLE_RADIUS,
+            1,
+            MOUNTING_BRACKETS.CABLE_SEGMENTS,
+          ]}
+        />
       </mesh>
       <mesh
-        position={[screenWidth * 0.4, screenHeight * 0.5 + 0.6, -0.1]}
+        position={[
+          screenWidth * MOUNTING_BRACKETS.TOP_BRACKET_HORIZONTAL_OFFSET,
+          screenHeight * 0.5 + MOUNTING_BRACKETS.CABLE_HEIGHT_OFFSET,
+          FRAME_DIMENSIONS.DEPTH_OFFSET,
+        ]}
         material={material}
       >
-        <cylinderGeometry args={[0.02, 0.02, 1, 8]} />
+        <cylinderGeometry
+          args={[
+            MOUNTING_BRACKETS.CABLE_RADIUS,
+            MOUNTING_BRACKETS.CABLE_RADIUS,
+            1,
+            MOUNTING_BRACKETS.CABLE_SEGMENTS,
+          ]}
+        />
       </mesh>
 
       {/* Side mounting plates */}
-      <mesh position={[-screenWidth * 0.52, 0, -0.05]} material={material}>
-        <boxGeometry args={[0.08, screenHeight * 0.6, 0.2]} />
+      <mesh
+        position={[-screenWidth * MOUNTING_BRACKETS.SIDE_PLATE_HORIZONTAL_OFFSET, 0, -0.05]}
+        material={material}
+      >
+        <boxGeometry
+          args={[
+            MOUNTING_BRACKETS.SIDE_PLATE_WIDTH,
+            screenHeight * MOUNTING_BRACKETS.SIDE_PLATE_HEIGHT_RATIO,
+            MOUNTING_BRACKETS.SIDE_PLATE_DEPTH,
+          ]}
+        />
       </mesh>
-      <mesh position={[screenWidth * 0.52, 0, -0.05]} material={material}>
-        <boxGeometry args={[0.08, screenHeight * 0.6, 0.2]} />
+      <mesh
+        position={[screenWidth * MOUNTING_BRACKETS.SIDE_PLATE_HORIZONTAL_OFFSET, 0, -0.05]}
+        material={material}
+      >
+        <boxGeometry
+          args={[
+            MOUNTING_BRACKETS.SIDE_PLATE_WIDTH,
+            screenHeight * MOUNTING_BRACKETS.SIDE_PLATE_HEIGHT_RATIO,
+            MOUNTING_BRACKETS.SIDE_PLATE_DEPTH,
+          ]}
+        />
       </mesh>
     </>
   );
@@ -460,26 +1223,26 @@ function FrameAccentLights({
 
   useFrame((state) => {
     const t = state.clock.elapsedTime;
-    const speed = isHovered ? 4 : 2;
+    const speed = isHovered ? FRAME_ACCENT_LIGHTS.ANIMATION_SPEED_HOVER : FRAME_ACCENT_LIGHTS.ANIMATION_SPEED_IDLE;
     if (light1Ref.current) {
       (light1Ref.current.material as THREE.MeshBasicMaterial).opacity =
-        0.6 + Math.sin(t * speed) * 0.4;
+        FRAME_ACCENT_LIGHTS.OPACITY * 0.75 + Math.sin(t * speed) * 0.4;
     }
     if (light2Ref.current) {
       (light2Ref.current.material as THREE.MeshBasicMaterial).opacity =
-        0.6 + Math.sin(t * speed + Math.PI) * 0.4;
+        FRAME_ACCENT_LIGHTS.OPACITY * 0.75 + Math.sin(t * speed + FRAME_ACCENT_LIGHTS.SECOND_LIGHT_PHASE_OFFSET) * 0.4;
     }
   });
 
   return (
     <>
-      <mesh ref={light1Ref} position={[-screenWidth * 0.48, -screenHeight * 0.48, 0.1]}>
-        <circleGeometry args={[0.04, 8]} />
-        <meshBasicMaterial color={isHovered ? '#00ff88' : '#00ff00'} transparent opacity={0.8} />
+      <mesh ref={light1Ref} position={[-screenWidth * FRAME_ACCENT_LIGHTS.HORIZONTAL_OFFSET_RATIO, -screenHeight * FRAME_ACCENT_LIGHTS.VERTICAL_OFFSET_RATIO, ZPOSITION.FRAME_ACCENT_LIGHTS]}>
+        <circleGeometry args={[FRAME_ACCENT_LIGHTS.RADIUS, FRAME_ACCENT_LIGHTS.SEGMENTS]} />
+        <meshBasicMaterial color={isHovered ? '#00ff88' : '#00ff00'} transparent opacity={FRAME_ACCENT_LIGHTS.OPACITY} />
       </mesh>
-      <mesh ref={light2Ref} position={[screenWidth * 0.48, -screenHeight * 0.48, 0.1]}>
-        <circleGeometry args={[0.04, 8]} />
-        <meshBasicMaterial color={isHovered ? '#ff4488' : '#ff0000'} transparent opacity={0.8} />
+      <mesh ref={light2Ref} position={[screenWidth * FRAME_ACCENT_LIGHTS.HORIZONTAL_OFFSET_RATIO, -screenHeight * FRAME_ACCENT_LIGHTS.VERTICAL_OFFSET_RATIO, ZPOSITION.FRAME_ACCENT_LIGHTS]}>
+        <circleGeometry args={[FRAME_ACCENT_LIGHTS.RADIUS, FRAME_ACCENT_LIGHTS.SEGMENTS]} />
+        <meshBasicMaterial color={isHovered ? '#ff4488' : '#ff0000'} transparent opacity={FRAME_ACCENT_LIGHTS.OPACITY} />
       </mesh>
     </>
   );
