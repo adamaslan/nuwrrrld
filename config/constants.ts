@@ -189,6 +189,105 @@ export const BUILDING_CONFIG = {
 } as const;
 
 /**
+ * Procedural generation parameters for ships and buildings.
+ * These values control the diversity and detail density of procedurally generated elements.
+ */
+export const PROCEDURAL_CONFIG = {
+  /** Ship variation parameters */
+  SHIP: {
+    /** Number of hull color variants (12 total) */
+    HULL_COLORS: 12,
+    /** Number of engine color variants (8 total) */
+    ENGINE_COLORS: 8,
+    /** Total unique color combinations (12 x 8 = 96) */
+    COLOR_COMBINATIONS: 96,
+
+    /** Detail density by ship type (0-1) */
+    DETAIL_DENSITY: {
+      SHUTTLE: 0.6,
+      TRANSPORT: 0.7,
+      FREIGHTER: 0.8,
+      DREADNOUGHT: 0.9,
+    },
+
+    /** Hull section ranges by ship type [min, max] */
+    HULL_SECTIONS: {
+      SHUTTLE: [1, 2],
+      TRANSPORT: [2, 3],
+      FREIGHTER: [3, 4],
+      DREADNOUGHT: [4, 6],
+    },
+
+    /** Greeble count ranges by ship type [min, max] */
+    GREEBLES: {
+      SHUTTLE: [2, 4],
+      TRANSPORT: [4, 8],
+      FREIGHTER: [8, 12],
+      DREADNOUGHT: [12, 20],
+    },
+  },
+
+  /** Building variation parameters */
+  BUILDING: {
+    /** Number of building material variants (4 total) */
+    MATERIAL_VARIANTS: 4,
+    /** Minimum tiers per building */
+    MIN_TIERS: 2,
+    /** Maximum tiers per building */
+    MAX_TIERS: 4,
+    /** Window pattern types: grid, staggered, random-sparse */
+    WINDOW_PATTERNS: 3,
+
+    /** Architectural detail spawn chances (0-1) */
+    DETAILS: {
+      WATER_TOWER: 0.4,
+      SATELLITE_DISH: 0.3,
+      AWNING: 0.5,
+      SIDE_DETAILS_PER_TIER: [2, 5],
+    },
+
+    /** Setback reduction per tier (width/depth reduction %) */
+    TIER_SETBACK: {
+      WIDTH_REDUCTION: [0.05, 0.25],
+      DEPTH_REDUCTION: [0.05, 0.25],
+    },
+  },
+
+  /** Back panel variation parameters */
+  BACK_PANEL: {
+    /** Ventilation grille count range [min, max] */
+    VENT_GRILLES: [1, 2],
+    /** LED indicator count range [min, max] */
+    LED_COUNT: [3, 5],
+    /** Cooling unit styles: fan, heatsink, both */
+    COOLING_STYLES: 3,
+    /** Warning label styles: highVoltage, caution, both */
+    WARNING_STYLES: 3,
+    /** Cable routing patterns: horizontal, vertical, both */
+    CABLE_ROUTING: 3,
+
+    /** Component spawn chances (0-1) */
+    COMPONENTS: {
+      POWER_CONNECTOR: 0.7,
+      SERIAL_PLATE: 0.8,
+      HEAT_SINK_FINS: [2, 4],
+    },
+  },
+
+  /** Variant seed ranges for consistent procedural generation */
+  SEED_RANGES: {
+    SHUTTLE: [1000, 1999],
+    TRANSPORT: [2000, 2999],
+    FREIGHTER: [3000, 3999],
+    CAPITAL_SHIP: [9000, 9999],
+    LEFT_BUILDINGS: [5000, 5999],
+    RIGHT_BUILDINGS: [6000, 6999],
+    BACKGROUND_BUILDINGS: [7000, 7999],
+    TV_SCREENS: [8000, 8999],
+  },
+} as const;
+
+/**
  * Type guard to ensure const assertion.
  */
 type Immutable<T> = {

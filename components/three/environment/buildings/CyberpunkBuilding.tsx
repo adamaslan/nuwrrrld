@@ -1,23 +1,23 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import type { CyberpunkBuildingProps } from '@/types/three-scene';
+import type { CyberpunkBuildingProps, WindowColor } from '@/types/three-scene';
 import { getMeshBasicMaterial } from '@/lib/type-guards';
-import { ANIMATION_SPEEDS, OPACITY, BUILDING_CONFIG } from '@/config/constants';
-import { getWindowMaterialByColor } from '@/lib/scene-utils';
+import { ANIMATION_SPEEDS, OPACITY } from '@/config/constants';
+import { generateBuildingBlueprint } from './BuildingBlueprint';
+import { getBuildingMaterialByIndex } from '@/components/three/pools/MaterialPool';
 
 /**
- * Cyberpunk-style building with animated windows and optional antenna.
+ * Cyberpunk-style building with procedurally generated architecture.
  *
- * Features:
- * - Main building structure with specified dimensions
- * - Grid of flickering window lights
- * - Optional communication antenna on roof
- * - Seeded random for consistent window patterns
- *
- * Uses pooled geometries and materials for optimal memory usage.
+ * Uses BuildingBlueprint system for 10x visual diversity:
+ * - Tiered setback profiles (2-4 tiers)
+ * - Varied window patterns (grid, staggered, random-sparse)
+ * - Rooftop elements (antennas, water towers, satellite dishes)
+ * - Architectural details (vents, neon stripes, pipes, doorways)
+ * - 4 building material variants
  *
  * @param props - Building configuration and pooled resources
  */
@@ -30,20 +30,29 @@ export default function CyberpunkBuilding({
   hasAntenna,
   geometries,
   materials,
+  variantSeed,
 }: CyberpunkBuildingProps) {
   const windowRefs = useRef<(THREE.Mesh | null)[]>([]);
-  const accentRef = useRef<THREE.Mesh>(null);
-  const antennaLightRef = useRef<THREE.PointLight>(null);
   const [width, height, depth] = size;
 
-  // Get pooled window material based on color
-  const windowMaterial = getWindowMaterialByColor(materials, windowColor);
+  // Generate procedural blueprint from variant seed
+  const blueprint = useMemo(
+    () => generateBuildingBlueprint(
+      size,
+      windowColor as WindowColor,
+      hasAntenna,
+      variantSeed ?? index
+    ),
+    [size, windowColor, hasAntenna, variantSeed, index]
+  );
 
-  // Generate window grid
-  const windowRows = Math.floor(size[1] / 2.5);
-  const windowCols = Math.floor(size[0] / 1.8);
+  // Get building material by index from blueprint
+  const buildingMaterial = useMemo(
+    () => getBuildingMaterialByIndex(materials, blueprint.buildingMaterialIndex),
+    [materials, blueprint.buildingMaterialIndex]
+  );
 
-  // Flickering animation
+  // Flickering animation for windows
   useFrame((state) => {
     const time = state.clock.elapsedTime;
 
@@ -57,97 +66,75 @@ export default function CyberpunkBuilding({
         (0.4 + Math.sin(time * ANIMATION_SPEEDS.SLOW + index + idx * 0.2) * 0.3) *
         flicker;
     });
-
-    if (accentRef.current) {
-      const mat = getMeshBasicMaterial(accentRef.current);
-      if (mat) {
-        mat.opacity =
-          OPACITY.HIGH + Math.sin(time * ANIMATION_SPEEDS.MEDIUM + index) * 0.3;
-      }
-    }
-
-    if (antennaLightRef.current) {
-      antennaLightRef.current.intensity =
-        OPACITY.HIGH + Math.sin(time * ANIMATION_SPEEDS.VERY_FAST + index) * 0.3;
-    }
   });
+
+  // Helper to get geometry by name
+  const getGeometry = (geomType: 'box' | 'cylinder' | 'sphere' | 'plane') => {
+    switch (geomType) {
+      case 'box':
+        return geometries.box;
+      case 'cylinder':
+        return geometries.cylinder;
+      case 'sphere':
+        return geometries.sphere;
+      case 'plane':
+        return geometries.plane;
+      default:
+        return geometries.box;
+    }
+  };
+
+  // Helper to get material by name
+  const getMaterial = (matType: string) => {
+    switch (matType) {
+      case 'building':
+        return buildingMaterial;
+      case 'buildingDark':
+        return materials.buildingDark;
+      case 'buildingGrey':
+        return materials.buildingGrey;
+      case 'window':
+      case 'emissiveCyan':
+        return materials.emissiveCyan;
+      case 'emissiveMagenta':
+        return materials.emissiveMagenta;
+      case 'emissiveGreen':
+        return materials.emissiveGreen;
+      case 'emissiveAmber':
+        return materials.emissiveAmber;
+      case 'antennaMetal':
+        return materials.antennaMetal;
+      case 'antennaLight':
+        return materials.antennaLight;
+      default:
+        return buildingMaterial;
+    }
+  };
 
   return (
     <group position={position}>
-      {/* Main building structure */}
-      <mesh
-        geometry={geometries.box}
-        material={material}
-        scale={size}
-        castShadow
-      />
+      {/* Render all blueprint elements */}
+      {blueprint.elements.map((element, idx) => {
+        const geometry = getGeometry(element.geometry);
+        const elementMaterial = getMaterial(element.material);
+        const scale = element.scale;
 
-      {/* Windows - grid of flickering lights */}
-      {Array.from({ length: Math.min(windowRows, 15) }).map((_, row) =>
-        Array.from({ length: Math.min(windowCols, 4) }).map((_, col) => {
-          const idx = row * windowCols + col;
-          return (
-            <mesh
-              key={`${row}-${col}`}
-              ref={(el) => {
-                if (el) windowRefs.current[idx] = el;
-              }}
-              position={[
-                -size[0] / 2 + 0.9 + col * 1.6,
-                -size[1] / 2 + 2 + row * 2.5,
-                size[2] / 2 + 0.01,
-              ]}
-              geometry={geometries.windowPlane}
-              material={windowMaterial}
-            />
-          );
-        })
-      )}
+        // Track window elements for animation
+        const isWindow = element.type === 'window';
 
-      {/* Accent stripe */}
-      <mesh
-        ref={accentRef}
-        position={[0, size[1] / 2 - 1, size[2] / 2 + 0.02]}
-        geometry={geometries.plane}
-        material={windowMaterial}
-        scale={[size[0] * 0.95, 0.4, 1]}
-      />
-
-      {/* Mid-building stripe for tall buildings */}
-      {size[1] > 30 && (
-        <mesh
-          position={[0, 0, size[2] / 2 + 0.02]}
-          geometry={geometries.plane}
-          material={windowMaterial}
-          scale={[size[0] * 0.95, 0.2, 1]}
-        />
-      )}
-
-      {/* Optional antenna on roof */}
-      {hasAntenna && (
-        <group position={[0, size[1] / 2, 0]}>
+        return (
           <mesh
-            geometry={geometries.cylinder}
-            material={materials.antennaMetal}
-            scale={[0.15, 5, 0.15]}
+            key={`${element.type}-${idx}`}
+            ref={isWindow ? (el) => { if (el) windowRefs.current[idx] = el; } : undefined}
+            position={element.position}
+            rotation={element.rotation}
+            geometry={geometry}
+            material={elementMaterial}
+            scale={scale}
+            castShadow={element.type === 'tier'}
           />
-          {/* Antenna light beacon */}
-          <mesh
-            position={[0, 2.8, 0]}
-            geometry={geometries.sphere}
-            material={materials.emissiveRed}
-            scale={0.15}
-          />
-          {/* Antenna beacon light */}
-          <pointLight
-            ref={antennaLightRef}
-            color="#ff0000"
-            intensity={OPACITY.HIGH}
-            distance={20}
-            position={[0, 3, 0]}
-          />
-        </group>
-      )}
+        );
+      })}
     </group>
   );
 }

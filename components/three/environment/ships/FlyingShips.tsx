@@ -51,6 +51,7 @@ export default function FlyingShips() {
         zLane: -8 - random(i + 60) * 15,
         direction: i % 2 === 0 ? 1 : -1,
         offset: i * 10,
+        variantSeed: 1000 + i,
       });
     }
 
@@ -72,6 +73,7 @@ export default function FlyingShips() {
         zLane: -15 - random(i + 150) * 12,
         direction: i % 2 === 0 ? 1 : -1,
         offset: i * 15,
+        variantSeed: 2000 + i,
       });
     }
 
@@ -81,39 +83,41 @@ export default function FlyingShips() {
         type: 'freighter',
         size: [
           (4.0 + random(i + 200) * 1.5) * 1.5,
-          (1.0 + random(i + 210) * 0.5) * 1.5,
+          (4.0 + random(i + 210) * 0.5) * 1.5,
           (2.0 + random(i + 220) * 0.8) * 1.5,
         ],
         speed: 0.06 + random(i + 230) * 0.04,
         color: ['#0a0a1a', '#1a0a1a', '#0a1a1a'][i % 3],
         lightIntensity: 1.5,
         lightColor: '#ffddaa',
-        engineColor: '#ff6600',
+        engineColor: '#f30ff7',
         yBase: 20 + random(i + 240) * 15,
         zLane: -25 - random(i + 250) * 10,
         direction: i % 2 === 0 ? 1 : -1,
         offset: i * 25,
+        variantSeed: 3000 + i,
       });
     }
 
     // Capital Ships - 3 ultra-massive dreadnoughts with different colors
-    // Capital Ship 1: Deep Navy Blue with Orange Engines
+    // Capital Ship 1: Deep Navy Blue with Orange Engines - 10x MEGA SHIP
     fleet.push({
       type: 'dreadnought',
       size: [
-        (4.0 + random(300) * 1.5) * 9,
-        (1.2 + random(301) * 0.5) * 9,
-        (2.5 + random(302) * 1.0) * 9,
+        (5.0 + random(300) * 1.5) * 10,
+        (5.2 + random(301) * 0.5) * 10,
+        (2.5 + random(302) * 1.0) * 10,
       ],
       speed: 0.04 + random(303) * 0.015,
-      color: '#1a2a3a', // Deep navy blue
+      color: '#f30ff7', // Bright Pink
       lightIntensity: 1.5,
       lightColor: '#ffddaa',
       engineColor: '#ff6600', // Orange engines
       yBase: 32 + random(304) * 8,
-      zLane: -50 - random(305) * 15,
+      zLane: 10 - random(305) * 15,
       direction: 1,
       offset: 0,
+      variantSeed: 9001,
     });
 
     // Capital Ship 2: Dark Purple with Cyan Engines
@@ -133,6 +137,7 @@ export default function FlyingShips() {
       zLane: -55 - random(315) * 12,
       direction: -1,
       offset: 40,
+      variantSeed: 9002,
     });
 
     // Capital Ship 3: Dark Gray with Green Engines
@@ -152,6 +157,7 @@ export default function FlyingShips() {
       zLane: -45 - random(325) * 18,
       direction: 1,
       offset: 20,
+      variantSeed: 9003,
     });
 
     return fleet;
