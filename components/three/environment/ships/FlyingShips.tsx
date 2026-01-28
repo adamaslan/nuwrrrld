@@ -6,7 +6,8 @@ import * as THREE from 'three';
 import { usePools } from '../../pools';
 import Ship from './Ship';
 import type { ShipConfig } from '@/types/three-scene';
-import { ANIMATION_SPEEDS, SHIP_SCALE } from '@/config/constants';
+import { ANIMATION_SPEEDS, SHIP_SCALE, CAPITAL_SHIP_BOUNDARIES } from '@/config/constants';
+import { seededRandom } from '../utils/seededRandom';
 
 /**
  * Orchestrates the flying ship fleet.
@@ -36,13 +37,7 @@ export default function FlyingShips() {
   // Generate boundary waypoints for capital ships
   const generateBoundaryWaypoints = (shipIndex: number, capitalShipIndex: number): BoundaryWaypoint[] => {
     const seed = 54321 + capitalShipIndex * 1000;
-    const random = (i: number) => {
-      const x = Math.sin(seed + i * 7777) * 10000;
-      return x - Math.floor(x);
-    };
-
-    const BOUNDARY_X = 150;
-    const BOUNDARY_Z = 187.5;
+    const { BOUNDARY_X, BOUNDARY_Z } = CAPITAL_SHIP_BOUNDARIES;
     const waypoints: BoundaryWaypoint[] = [];
 
     // Generate 4 waypoints at different boundaries (corners)
@@ -54,41 +49,43 @@ export default function FlyingShips() {
     ];
 
     // Shuffle corners with randomness and add some mid-boundary points
-    const shuffledCorners = [...corners].sort(() => random(shipIndex * 100) - 0.5);
+    const shuffledCorners = [...corners].sort(
+      () => seededRandom(seed + shipIndex * 100) - 0.5
+    );
     let timeAccum = 0;
 
     for (let i = 0; i < shuffledCorners.length + 2; i++) {
       if (i < shuffledCorners.length) {
         const corner = shuffledCorners[i];
-        timeAccum += 30 + random(shipIndex * 10 + i) * 20; // 30-50 seconds between waypoints
+        timeAccum += 30 + seededRandom(seed + shipIndex * 10 + i) * 20; // 30-50 seconds between waypoints
         waypoints.push({
-          x: corner.x + (random(shipIndex * 20 + i) - 0.5) * 30,
-          z: corner.z + (random(shipIndex * 30 + i) - 0.5) * 30,
+          x: corner.x + (seededRandom(seed + shipIndex * 20 + i) - 0.5) * 30,
+          z: corner.z + (seededRandom(seed + shipIndex * 30 + i) - 0.5) * 30,
           arrivalTime: timeAccum,
         });
       } else {
         // Add mid-boundary waypoints for variety
-        const side = Math.floor(random(shipIndex * 40 + i) * 4);
+        const side = Math.floor(seededRandom(seed + shipIndex * 40 + i) * 4);
         let x = 0, z = 0;
         switch (side) {
           case 0: // right edge
-            x = BOUNDARY_X + (random(shipIndex * 50 + i) - 0.5) * 20;
-            z = (random(shipIndex * 60 + i) - 0.5) * BOUNDARY_Z * 2;
+            x = BOUNDARY_X + (seededRandom(seed + shipIndex * 50 + i) - 0.5) * 20;
+            z = (seededRandom(seed + shipIndex * 60 + i) - 0.5) * BOUNDARY_Z * 2;
             break;
           case 1: // left edge
-            x = -BOUNDARY_X + (random(shipIndex * 50 + i) - 0.5) * 20;
-            z = (random(shipIndex * 60 + i) - 0.5) * BOUNDARY_Z * 2;
+            x = -BOUNDARY_X + (seededRandom(seed + shipIndex * 50 + i) - 0.5) * 20;
+            z = (seededRandom(seed + shipIndex * 60 + i) - 0.5) * BOUNDARY_Z * 2;
             break;
           case 2: // top edge
-            z = BOUNDARY_Z + (random(shipIndex * 50 + i) - 0.5) * 20;
-            x = (random(shipIndex * 60 + i) - 0.5) * BOUNDARY_X * 2;
+            z = BOUNDARY_Z + (seededRandom(seed + shipIndex * 50 + i) - 0.5) * 20;
+            x = (seededRandom(seed + shipIndex * 60 + i) - 0.5) * BOUNDARY_X * 2;
             break;
           case 3: // bottom edge
-            z = -BOUNDARY_Z + (random(shipIndex * 50 + i) - 0.5) * 20;
-            x = (random(shipIndex * 60 + i) - 0.5) * BOUNDARY_X * 2;
+            z = -BOUNDARY_Z + (seededRandom(seed + shipIndex * 50 + i) - 0.5) * 20;
+            x = (seededRandom(seed + shipIndex * 60 + i) - 0.5) * BOUNDARY_X * 2;
             break;
         }
-        timeAccum += 30 + random(shipIndex * 10 + i) * 20;
+        timeAccum += 30 + seededRandom(seed + shipIndex * 10 + i) * 20;
         waypoints.push({ x, z, arrivalTime: timeAccum });
       }
     }
@@ -256,15 +253,15 @@ export default function FlyingShips() {
         const waypoints = waypointsRef.current.get(i);
         if (!waypoints || waypoints.length === 0) return;
 
-        let currentWaypointIdx = currentWaypointRef.current.get(i) ?? 0;
         const cycleTime = waypoints[waypoints.length - 1].arrivalTime;
         const adjustedTime = time % cycleTime;
 
-        // Find current and next waypoints
-        let currentWaypoint = waypoints[0];
-        let nextWaypoint = waypoints[1] || waypoints[0];
-        let currentIdx = 0;
+        // Start with wrap-around segment (last to first waypoint)
+        let currentWaypoint = waypoints[waypoints.length - 1];
+        let nextWaypoint = waypoints[0];
+        let currentIdx = waypoints.length - 1;
 
+        // Find which segment we're in
         for (let j = 0; j < waypoints.length - 1; j++) {
           if (adjustedTime >= waypoints[j].arrivalTime && adjustedTime < waypoints[j + 1].arrivalTime) {
             currentWaypoint = waypoints[j];
@@ -276,10 +273,18 @@ export default function FlyingShips() {
 
         currentWaypointRef.current.set(i, currentIdx);
 
-        // Linear interpolation between waypoints
-        const segmentDuration = nextWaypoint.arrivalTime - currentWaypoint.arrivalTime;
-        const segmentTime = adjustedTime - currentWaypoint.arrivalTime;
-        const t = Math.max(0, Math.min(1, segmentTime / segmentDuration));
+        // Linear interpolation between waypoints with proper wrap-around handling
+        const segmentStartTime = currentWaypoint.arrivalTime;
+        let segmentDuration = nextWaypoint.arrivalTime - segmentStartTime;
+        let timeIntoSegment = adjustedTime - segmentStartTime;
+
+        // Handle the wrap-around segment from the last to the first waypoint
+        if (segmentDuration < 0) {
+          segmentDuration += cycleTime;
+          timeIntoSegment += cycleTime;
+        }
+
+        const t = segmentDuration > 0 ? Math.max(0, Math.min(1, timeIntoSegment / segmentDuration)) : 0;
 
         shipGroup.position.x = currentWaypoint.x + (nextWaypoint.x - currentWaypoint.x) * t;
         shipGroup.position.z = currentWaypoint.z + (nextWaypoint.z - currentWaypoint.z) * t;
