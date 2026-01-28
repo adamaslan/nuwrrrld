@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { usePools } from '../../pools';
 import Ship from './Ship';
 import type { ShipConfig } from '@/types/three-scene';
-import { ANIMATION_SPEEDS, SHIP_SCALE, CAPITAL_SHIP_BOUNDARIES } from '@/config/constants';
+import { SHIP_SCALE, CAPITAL_SHIP_BOUNDARIES } from '@/config/constants';
 import { seededRandom } from '../utils/seededRandom';
 
 /**
@@ -50,42 +50,45 @@ export default function FlyingShips() {
 
     // Shuffle corners with randomness and add some mid-boundary points
     const shuffledCorners = [...corners].sort(
-      () => seededRandom(seed + shipIndex * 100) - 0.5
+      () => seededRandom(seed, shipIndex * 100) - 0.5
     );
     let timeAccum = 0;
 
     for (let i = 0; i < shuffledCorners.length + 2; i++) {
       if (i < shuffledCorners.length) {
         const corner = shuffledCorners[i];
-        timeAccum += 30 + seededRandom(seed + shipIndex * 10 + i) * 20; // 30-50 seconds between waypoints
+        timeAccum += 30 + seededRandom(seed, shipIndex * 10 + i) * 20; // 30-50 seconds between waypoints
         waypoints.push({
-          x: corner.x + (seededRandom(seed + shipIndex * 20 + i) - 0.5) * 30,
-          z: corner.z + (seededRandom(seed + shipIndex * 30 + i) - 0.5) * 30,
+          x: corner.x + (seededRandom(seed, shipIndex * 20 + i) - 0.5) * 30,
+          z: corner.z + (seededRandom(seed, shipIndex * 30 + i) - 0.5) * 30,
           arrivalTime: timeAccum,
         });
       } else {
         // Add mid-boundary waypoints for variety
-        const side = Math.floor(seededRandom(seed + shipIndex * 40 + i) * 4);
+        const side = Math.floor(seededRandom(seed, shipIndex * 40 + i) * 4);
+        const edgeOffset = (seededRandom(seed, shipIndex * 50 + i) - 0.5) * 20;
+        const centerOffset = seededRandom(seed, shipIndex * 60 + i) - 0.5;
+
         let x = 0, z = 0;
         switch (side) {
           case 0: // right edge
-            x = BOUNDARY_X + (seededRandom(seed + shipIndex * 50 + i) - 0.5) * 20;
-            z = (seededRandom(seed + shipIndex * 60 + i) - 0.5) * BOUNDARY_Z * 2;
+            x = BOUNDARY_X + edgeOffset;
+            z = centerOffset * BOUNDARY_Z * 2;
             break;
           case 1: // left edge
-            x = -BOUNDARY_X + (seededRandom(seed + shipIndex * 50 + i) - 0.5) * 20;
-            z = (seededRandom(seed + shipIndex * 60 + i) - 0.5) * BOUNDARY_Z * 2;
+            x = -BOUNDARY_X + edgeOffset;
+            z = centerOffset * BOUNDARY_Z * 2;
             break;
           case 2: // top edge
-            z = BOUNDARY_Z + (seededRandom(seed + shipIndex * 50 + i) - 0.5) * 20;
-            x = (seededRandom(seed + shipIndex * 60 + i) - 0.5) * BOUNDARY_X * 2;
+            z = BOUNDARY_Z + edgeOffset;
+            x = centerOffset * BOUNDARY_X * 2;
             break;
           case 3: // bottom edge
-            z = -BOUNDARY_Z + (seededRandom(seed + shipIndex * 50 + i) - 0.5) * 20;
-            x = (seededRandom(seed + shipIndex * 60 + i) - 0.5) * BOUNDARY_X * 2;
+            z = -BOUNDARY_Z + edgeOffset;
+            x = centerOffset * BOUNDARY_X * 2;
             break;
         }
-        timeAccum += 30 + seededRandom(seed + shipIndex * 10 + i) * 20;
+        timeAccum += 30 + seededRandom(seed, shipIndex * 10 + i) * 20;
         waypoints.push({ x, z, arrivalTime: timeAccum });
       }
     }
