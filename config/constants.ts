@@ -82,6 +82,17 @@ export const SCENE_DIMENSIONS = {
 } as const;
 
 /**
+ * Capital ship boundary waypoints for orbital patrol movement.
+ * Derived from SCENE_DIMENSIONS to maintain consistency with environment size.
+ */
+export const CAPITAL_SHIP_BOUNDARIES = {
+  /** Half of ground plane width (X-axis boundary) */
+  BOUNDARY_X: SCENE_DIMENSIONS.GROUND_PLANE_WIDTH / 2,
+  /** Half of ground plane height (Z-axis boundary) */
+  BOUNDARY_Z: SCENE_DIMENSIONS.GROUND_PLANE_HEIGHT / 2,
+} as const;
+
+/**
  * Ship size multipliers for different vessel classes.
  */
 export const SHIP_SCALE = {

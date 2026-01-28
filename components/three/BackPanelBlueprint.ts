@@ -1,4 +1,4 @@
-import { seededRandom } from './utils/seededRandom';
+import { seededRandom } from './environment/utils/seededRandom';
 import type { Vector3Tuple } from '@/types/three-scene';
 
 /**
