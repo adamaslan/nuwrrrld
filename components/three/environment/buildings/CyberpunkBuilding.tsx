@@ -127,7 +127,7 @@ export default function CyberpunkBuilding({
             key={`${element.type}-${idx}`}
             ref={isWindow ? (el) => { if (el) windowRefs.current[idx] = el; } : undefined}
             position={element.position}
-            rotation={[...element.rotation]}
+            rotation={element.rotation ? [element.rotation[0], element.rotation[1], element.rotation[2]] : undefined}
             geometry={geometry}
             material={elementMaterial}
             scale={scale}
