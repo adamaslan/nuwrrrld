@@ -245,7 +245,7 @@ export function generateShipBlueprint(
         type: 'greeble',
         geometry: 'sphere',
         position: [xPos, yPos, zPos],
-        scale: 0.08,
+        scale: [0.08, 0.08, 0.08],
         material: 'emissiveCyan',
       });
     }
@@ -276,7 +276,7 @@ export function generateShipBlueprint(
       type: 'greeble',
       geometry: 'sphere',
       position: [xPos, height * 0.5 + antennaHeight / 2, 0],
-      scale: 0.05,
+      scale: [0.05, 0.05, 0.05],
       material: 'emissiveRed',
     });
   }
@@ -302,11 +302,12 @@ export function generateShipBlueprint(
   }
 
   // Navigation lights (headlight + tail lights)
+  const headlightScale = type === 'freighter' ? 0.15 : type === 'transport' ? 0.12 : 0.08;
   elements.push({
     type: 'greeble',
     geometry: 'sphere',
     position: [width * 0.5, 0, 0],
-    scale: type === 'freighter' ? 0.15 : type === 'transport' ? 0.12 : 0.08,
+    scale: [headlightScale, headlightScale, headlightScale],
     material: 'emissiveCyan',
   });
 
