@@ -8,7 +8,7 @@
  */
 
 import * as THREE from 'three';
-import { BufferGeometryUtils } from 'three/addons/utils/BufferGeometryUtils.js';
+import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 
 /**
  * Entry for a single geometry to be merged
@@ -156,10 +156,10 @@ export function createMergedGroup(
   }
 
   // Create merged mesh for each material group
-  for (const [material, groupEntries] of materialGroups.entries()) {
+  Array.from(materialGroups.entries()).forEach(([material, groupEntries]) => {
     const mergedMesh = createMergedMeshByMaterial(groupEntries, material);
     group.add(mergedMesh);
-  }
+  });
 
   return group;
 }

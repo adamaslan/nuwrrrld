@@ -117,7 +117,7 @@ export default function Ship({
           <mesh
             key={`${element.type}-${idx}`}
             position={element.position}
-            rotation={element.rotation}
+            rotation={element.rotation ? [element.rotation[0], element.rotation[1], element.rotation[2]] : undefined}
             geometry={geometry}
             material={material}
             scale={scale}
