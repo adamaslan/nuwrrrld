@@ -183,7 +183,7 @@ export function generateBuildingBlueprint(
         type: 'antenna',
         geometry: 'sphere',
         position: [xPos, roofY + antennaHeight, zPos],
-        scale: 0.15,
+        scale: [0.15, 0.15, 0.15],
         material: 'antennaLight',
       });
     }
