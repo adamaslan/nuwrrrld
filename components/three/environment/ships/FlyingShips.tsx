@@ -20,9 +20,81 @@ import { ANIMATION_SPEEDS, SHIP_SCALE } from '@/config/constants';
  * Each ship type has distinct characteristics, movement patterns,
  * and visual styling.
  */
+
+interface BoundaryWaypoint {
+  x: number;
+  z: number;
+  arrivalTime: number;
+}
+
 export default function FlyingShips() {
   const shipsRef = useRef<THREE.Group>(null);
+  const waypointsRef = useRef<Map<number, BoundaryWaypoint[]>>(new Map());
+  const currentWaypointRef = useRef<Map<number, number>>(new Map());
   const { geometries, materials } = usePools();
+
+  // Generate boundary waypoints for capital ships
+  const generateBoundaryWaypoints = (shipIndex: number, capitalShipIndex: number): BoundaryWaypoint[] => {
+    const seed = 54321 + capitalShipIndex * 1000;
+    const random = (i: number) => {
+      const x = Math.sin(seed + i * 7777) * 10000;
+      return x - Math.floor(x);
+    };
+
+    const BOUNDARY_X = 150;
+    const BOUNDARY_Z = 187.5;
+    const waypoints: BoundaryWaypoint[] = [];
+
+    // Generate 4 waypoints at different boundaries (corners)
+    const corners = [
+      { x: BOUNDARY_X, z: BOUNDARY_Z },      // top-right
+      { x: -BOUNDARY_X, z: BOUNDARY_Z },     // top-left
+      { x: -BOUNDARY_X, z: -BOUNDARY_Z },    // bottom-left
+      { x: BOUNDARY_X, z: -BOUNDARY_Z },     // bottom-right
+    ];
+
+    // Shuffle corners with randomness and add some mid-boundary points
+    const shuffledCorners = [...corners].sort(() => random(shipIndex * 100) - 0.5);
+    let timeAccum = 0;
+
+    for (let i = 0; i < shuffledCorners.length + 2; i++) {
+      if (i < shuffledCorners.length) {
+        const corner = shuffledCorners[i];
+        timeAccum += 30 + random(shipIndex * 10 + i) * 20; // 30-50 seconds between waypoints
+        waypoints.push({
+          x: corner.x + (random(shipIndex * 20 + i) - 0.5) * 30,
+          z: corner.z + (random(shipIndex * 30 + i) - 0.5) * 30,
+          arrivalTime: timeAccum,
+        });
+      } else {
+        // Add mid-boundary waypoints for variety
+        const side = Math.floor(random(shipIndex * 40 + i) * 4);
+        let x = 0, z = 0;
+        switch (side) {
+          case 0: // right edge
+            x = BOUNDARY_X + (random(shipIndex * 50 + i) - 0.5) * 20;
+            z = (random(shipIndex * 60 + i) - 0.5) * BOUNDARY_Z * 2;
+            break;
+          case 1: // left edge
+            x = -BOUNDARY_X + (random(shipIndex * 50 + i) - 0.5) * 20;
+            z = (random(shipIndex * 60 + i) - 0.5) * BOUNDARY_Z * 2;
+            break;
+          case 2: // top edge
+            z = BOUNDARY_Z + (random(shipIndex * 50 + i) - 0.5) * 20;
+            x = (random(shipIndex * 60 + i) - 0.5) * BOUNDARY_X * 2;
+            break;
+          case 3: // bottom edge
+            z = -BOUNDARY_Z + (random(shipIndex * 50 + i) - 0.5) * 20;
+            x = (random(shipIndex * 60 + i) - 0.5) * BOUNDARY_X * 2;
+            break;
+        }
+        timeAccum += 30 + random(shipIndex * 10 + i) * 20;
+        waypoints.push({ x, z, arrivalTime: timeAccum });
+      }
+    }
+
+    return waypoints;
+  };
 
   // Generate ship fleet with 4 size classes
   const ships: ShipConfig[] = useMemo(() => {
@@ -32,6 +104,8 @@ export default function FlyingShips() {
       const x = Math.sin(seed + i * 7777) * 10000;
       return x - Math.floor(x);
     };
+
+    let capitalShipIndex = 0;
 
     // Small Shuttles (8x)
     for (let i = 0; i < SHIP_SCALE.SHUTTLE_COUNT; i++) {
@@ -101,6 +175,7 @@ export default function FlyingShips() {
 
     // Capital Ships - 3 ultra-massive dreadnoughts with different colors
     // Capital Ship 1: Deep Navy Blue with Orange Engines - 10x MEGA SHIP
+    const capitalShip1Index = fleet.length;
     fleet.push({
       type: 'dreadnought',
       size: [
@@ -119,8 +194,10 @@ export default function FlyingShips() {
       offset: 0,
       variantSeed: 9001,
     });
+    waypointsRef.current.set(capitalShip1Index, generateBoundaryWaypoints(capitalShip1Index, capitalShipIndex++));
 
     // Capital Ship 2: Dark Purple with Cyan Engines
+    const capitalShip2Index = fleet.length;
     fleet.push({
       type: 'dreadnought',
       size: [
@@ -139,8 +216,10 @@ export default function FlyingShips() {
       offset: 40,
       variantSeed: 9002,
     });
+    waypointsRef.current.set(capitalShip2Index, generateBoundaryWaypoints(capitalShip2Index, capitalShipIndex++));
 
     // Capital Ship 3: Dark Gray with Green Engines
+    const capitalShip3Index = fleet.length;
     fleet.push({
       type: 'dreadnought',
       size: [
@@ -159,6 +238,7 @@ export default function FlyingShips() {
       offset: 20,
       variantSeed: 9003,
     });
+    waypointsRef.current.set(capitalShip3Index, generateBoundaryWaypoints(capitalShip3Index, capitalShipIndex++));
 
     return fleet;
   }, []);
@@ -170,20 +250,65 @@ export default function FlyingShips() {
 
     shipsRef.current.children.forEach((shipGroup, i) => {
       const config = ships[i];
-      const xRange =
-        config.type === 'freighter' ? 50 : config.type === 'transport' ? 45 : 40;
 
-      // Movement with wrapping - narrower for portrait
-      const rawX =
-        (time * config.speed * config.direction * 12 + config.offset) %
-        (xRange * 2);
-      shipGroup.position.x = rawX - xRange;
-      shipGroup.position.z = config.zLane;
-      shipGroup.position.y = config.yBase + Math.sin(time * 1.5 + i) * 0.4;
-      shipGroup.rotation.y = config.direction > 0 ? 0 : Math.PI;
+      if (config.type === 'dreadnought') {
+        // Capital ships use waypoint-based navigation visiting boundaries
+        const waypoints = waypointsRef.current.get(i);
+        if (!waypoints || waypoints.length === 0) return;
 
-      // Slight banking on turns
-      shipGroup.rotation.z = Math.sin(time * 2 + i) * 0.05 * config.direction;
+        let currentWaypointIdx = currentWaypointRef.current.get(i) ?? 0;
+        const cycleTime = waypoints[waypoints.length - 1].arrivalTime;
+        const adjustedTime = time % cycleTime;
+
+        // Find current and next waypoints
+        let currentWaypoint = waypoints[0];
+        let nextWaypoint = waypoints[1] || waypoints[0];
+        let currentIdx = 0;
+
+        for (let j = 0; j < waypoints.length - 1; j++) {
+          if (adjustedTime >= waypoints[j].arrivalTime && adjustedTime < waypoints[j + 1].arrivalTime) {
+            currentWaypoint = waypoints[j];
+            nextWaypoint = waypoints[j + 1];
+            currentIdx = j;
+            break;
+          }
+        }
+
+        currentWaypointRef.current.set(i, currentIdx);
+
+        // Linear interpolation between waypoints
+        const segmentDuration = nextWaypoint.arrivalTime - currentWaypoint.arrivalTime;
+        const segmentTime = adjustedTime - currentWaypoint.arrivalTime;
+        const t = Math.max(0, Math.min(1, segmentTime / segmentDuration));
+
+        shipGroup.position.x = currentWaypoint.x + (nextWaypoint.x - currentWaypoint.x) * t;
+        shipGroup.position.z = currentWaypoint.z + (nextWaypoint.z - currentWaypoint.z) * t;
+        shipGroup.position.y = config.yBase + Math.sin(time * 1.5 + i) * 0.4;
+
+        // Rotate toward next waypoint
+        const dx = nextWaypoint.x - currentWaypoint.x;
+        const dz = nextWaypoint.z - currentWaypoint.z;
+        const angle = Math.atan2(dx, dz);
+        shipGroup.rotation.y = angle;
+
+        // Slight banking on turns
+        shipGroup.rotation.z = Math.sin(time * 2 + i) * 0.05;
+      } else {
+        // Standard ships use wrapping movement
+        const xRange =
+          config.type === 'freighter' ? 50 : config.type === 'transport' ? 45 : 40;
+
+        const rawX =
+          (time * config.speed * config.direction * 12 + config.offset) %
+          (xRange * 2);
+        shipGroup.position.x = rawX - xRange;
+        shipGroup.position.z = config.zLane;
+        shipGroup.position.y = config.yBase + Math.sin(time * 1.5 + i) * 0.4;
+        shipGroup.rotation.y = config.direction > 0 ? 0 : Math.PI;
+
+        // Slight banking on turns
+        shipGroup.rotation.z = Math.sin(time * 2 + i) * 0.05 * config.direction;
+      }
     });
   });
 

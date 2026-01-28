@@ -32,20 +32,6 @@ export default function Ship({
   config: ShipConfig;
   index: number;
 } & PoolsProps) {
-  const isCapitalShip = config.type === 'dreadnought';
-
-  // Capital ships have their own detailed rendering
-  if (isCapitalShip) {
-    return (
-      <CapitalShip
-        config={config}
-        index={index}
-        geometries={geometries}
-        materials={materials}
-      />
-    );
-  }
-
   // Generate procedural blueprint from variant seed
   const blueprint = useMemo(
     () => generateShipBlueprint(
@@ -66,6 +52,20 @@ export default function Ship({
     () => getEngineMaterialByIndex(materials, blueprint.engineColorIndex),
     [materials, blueprint.engineColorIndex]
   );
+
+  const isCapitalShip = config.type === 'dreadnought';
+
+  // Capital ships have their own detailed rendering
+  if (isCapitalShip) {
+    return (
+      <CapitalShip
+        config={config}
+        index={index}
+        geometries={geometries}
+        materials={materials}
+      />
+    );
+  }
 
   // Helper to get geometry by name
   const getGeometry = (geomType: 'box' | 'cylinder' | 'sphere' | 'plane') => {
