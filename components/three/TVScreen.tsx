@@ -8,6 +8,7 @@ import type { ScreenConfig } from '@/config/mediaConfig';
 import { RESPONSIVE_SCALE, OPACITY, CYBERPUNK_COLORS } from '@/config/constants';
 import SideScreen from './SideScreen';
 import { usePools } from './pools';
+import { useScreenContext } from '@/context/ScreenContext';
 
 /**
  * ============================================================================
@@ -763,6 +764,8 @@ export default function TVScreen({ config }: TVScreenProps) {
 
   const responsiveScale = useResponsiveScale();
   const { materials, geometries } = usePools();
+  const { selectedScreenId, toggleScreen } = useScreenContext();
+  const isSelected = selectedScreenId === config.id;
 
   // Interactive state
   const [isHovered, setIsHovered] = useState(false);
@@ -827,6 +830,9 @@ export default function TVScreen({ config }: TVScreenProps) {
     setTapScale(INTERACTION_TIMING.TAP_SCALE_FACTOR);
     setGlowIntensity(1);
 
+    // Toggle selection in remote control context
+    toggleScreen(config.id);
+
     // Reset after animation
     setTimeout(() => {
       setTapScale(1);
@@ -837,7 +843,7 @@ export default function TVScreen({ config }: TVScreenProps) {
       setIsTapped(false);
       setGlowIntensity(OPACITY.MEDIUM);
     }, INTERACTION_TIMING.TAP_STATE_RESET);
-  }, []);
+  }, [toggleScreen, config.id]);
 
   // Handle pointer enter (hover)
   const handlePointerEnter = useCallback((e: ThreeEvent<PointerEvent>) => {
@@ -860,14 +866,18 @@ export default function TVScreen({ config }: TVScreenProps) {
     if (glowRef.current) {
       const baseIntensity = isTapped
         ? GLOW_ANIMATION.BASE_INTENSITY_TAP
-        : isHovered
-          ? GLOW_ANIMATION.BASE_INTENSITY_HOVER
-          : GLOW_ANIMATION.BASE_INTENSITY_IDLE;
+        : isSelected
+          ? GLOW_ANIMATION.BASE_INTENSITY_HOVER + 0.15
+          : isHovered
+            ? GLOW_ANIMATION.BASE_INTENSITY_HOVER
+            : GLOW_ANIMATION.BASE_INTENSITY_IDLE;
       const pulseAmount = isTapped
         ? GLOW_ANIMATION.PULSE_AMOUNT_TAP
-        : isHovered
-          ? GLOW_ANIMATION.PULSE_AMOUNT_HOVER
-          : GLOW_ANIMATION.PULSE_AMOUNT_IDLE;
+        : isSelected
+          ? GLOW_ANIMATION.PULSE_AMOUNT_HOVER + 0.05
+          : isHovered
+            ? GLOW_ANIMATION.PULSE_AMOUNT_HOVER
+            : GLOW_ANIMATION.PULSE_AMOUNT_IDLE;
       const intensity =
         baseIntensity +
         Math.sin(time * GLOW_ANIMATION.PULSE_SPEED + config.id) * pulseAmount;
@@ -902,9 +912,10 @@ export default function TVScreen({ config }: TVScreenProps) {
     }
   });
 
-  // Glow color based on state
-  const glowColor = isTapped ? CYBERPUNK_COLORS.MAGENTA : CYBERPUNK_COLORS.CYAN;
-  const bezelColor = isTapped ? CYBERPUNK_COLORS.MAGENTA : CYBERPUNK_COLORS.CYAN;
+  // Glow color based on state — use screen's accent color when selected
+  const accentColor = (config.accentColor ?? CYBERPUNK_COLORS.CYAN) as string;
+  const glowColor = isTapped ? CYBERPUNK_COLORS.MAGENTA : isSelected ? accentColor : CYBERPUNK_COLORS.CYAN;
+  const bezelColor = isTapped ? CYBERPUNK_COLORS.MAGENTA : isSelected ? accentColor : CYBERPUNK_COLORS.CYAN;
 
   return (
     <group
