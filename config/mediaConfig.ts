@@ -3,6 +3,19 @@ export type TextAlign = 'top' | 'center' | 'bottom';
 export type PanelPosition = 'left' | 'right';
 
 /**
+ * A clickable link associated with a TV screen.
+ * Displayed in the RemoteControl panel when the screen is selected.
+ */
+export interface ScreenLink {
+  /** Display label for the link */
+  readonly label: string;
+  /** URL to navigate to */
+  readonly url: string;
+  /** Optional accent color (defaults to screen color) */
+  readonly color?: string;
+}
+
+/**
  * Configuration for optional side panel attached to TVScreen.
  * Enables display of customizable text with background.
  */
@@ -65,6 +78,12 @@ export interface ScreenConfig {
   rotation: [number, number, number];
   baseSize: number;
   aspectRatio: number;
+  /** Human-readable name shown in RemoteControl */
+  title?: string;
+  /** Accent color for this screen (used in RemoteControl) */
+  accentColor?: string;
+  /** Clickable links shown in RemoteControl when this screen is selected */
+  links?: ScreenLink[];
   /** Optional side panel configuration */
   sidePanel?: SidePanelConfig;
 }
@@ -96,6 +115,12 @@ export const SCREEN_CONFIGS: ScreenConfig[] = [
     rotation: [0.05, 0, 0],
     baseSize: 26,
     aspectRatio: 900 / 1600,
+    title: 'SURVEILLANCE NODE',
+    accentColor: '#00ff88',
+    links: [
+      { label: 'NUWRRRLD.COM', url: 'https://nuwrrrld.com', color: '#00ff88' },
+      { label: 'GITHUB', url: 'https://github.com', color: '#00ff88' },
+    ],
     sidePanel: {
       enabled: true,
       position: 'right',
@@ -120,6 +145,12 @@ export const SCREEN_CONFIGS: ScreenConfig[] = [
     rotation: [0, 0, 0],
     baseSize: 22,
     aspectRatio: 1,
+    title: 'LIVE FEED',
+    accentColor: '#00ffff',
+    links: [
+      { label: 'LIVE STREAM', url: 'https://twitch.tv', color: '#00ffff' },
+      { label: 'ARCHIVE', url: 'https://youtube.com', color: '#00ffff' },
+    ],
     sidePanel: {
       enabled: true,
       position: 'right',
@@ -144,6 +175,12 @@ export const SCREEN_CONFIGS: ScreenConfig[] = [
     rotation: [-0.05, 0, 0],
     baseSize: 24,
     aspectRatio: 948 / 1188,
+    title: 'PROJECT ALPHA',
+    accentColor: '#ff00ff',
+    links: [
+      { label: 'PROJECT DOCS', url: 'https://notion.so', color: '#ff00ff' },
+      { label: 'CONTACT', url: 'mailto:hello@nuwrrrld.com', color: '#ff00ff' },
+    ],
     sidePanel: {
       enabled: true,
       position: 'left',
