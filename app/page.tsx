@@ -1,6 +1,7 @@
 import dynamic from 'next/dynamic';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import { ScreenProvider } from '@/context/ScreenContext';
+import { CameraProvider } from '@/context/CameraContext';
 import RemoteControl from '@/components/ui/RemoteControl';
 
 const Scene = dynamic(() => import('@/components/three/Scene'), {
@@ -11,6 +12,7 @@ const Scene = dynamic(() => import('@/components/three/Scene'), {
 export default function HomePage() {
   return (
     <ScreenProvider>
+      <CameraProvider>
       <main className="scene-fullscreen">
         <Scene />
         <header className="site-header-overlay">
@@ -21,6 +23,7 @@ export default function HomePage() {
         </footer>
         <RemoteControl />
       </main>
+      </CameraProvider>
     </ScreenProvider>
   );
 }

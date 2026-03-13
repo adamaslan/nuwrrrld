@@ -3,6 +3,7 @@
 import { useRef, useMemo } from 'react';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
+import { useCameraContext } from '@/context/CameraContext';
 import Lighting from './Lighting';
 import Environment from './Environment';
 import TVScreen from './TVScreen';
@@ -55,6 +56,8 @@ function GradientSkyDome() {
 }
 
 export default function SceneContent() {
+  const { controlsRef } = useCameraContext();
+
   return (
     <PoolProvider>
       <SceneErrorBoundary
@@ -67,6 +70,7 @@ export default function SceneContent() {
 
         {/* Orbit controls for exploration */}
         <OrbitControls
+          ref={controlsRef}
           enablePan={true}
           enableZoom={true}
           enableRotate={true}
