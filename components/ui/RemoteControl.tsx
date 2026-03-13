@@ -225,7 +225,7 @@ export default function RemoteControl() {
             <div style={{ display: 'flex', gap: '0.4rem' }}>
               {SCREEN_CONFIGS.map((screen) => {
                 const isSelected = selectedScreenId === screen.id;
-                const color = screen.accentColor ?? '#00ffff';
+                const color = '#ff00ff';
                 return (
                   <button
                     key={screen.id}
@@ -236,31 +236,29 @@ export default function RemoteControl() {
                       background: isSelected
                         ? `rgba(${hexToRgb(color)}, 0.15)`
                         : 'rgba(255, 255, 255, 0.03)',
-                      border: `1px solid ${isSelected ? color : 'rgba(255,255,255,0.1)'}`,
+                      border: `1px solid ${isSelected ? color : 'rgba(255,0,255,0.3)'}`,
                       borderRadius: '4px',
-                      color: isSelected ? color : 'rgba(255, 255, 255, 0.4)',
+                      color: isSelected ? color : 'rgba(255, 0, 255, 0.6)',
                       cursor: 'pointer',
                       fontSize: '0.55rem',
                       letterSpacing: '0.1em',
                       textTransform: 'uppercase',
                       transition: 'all 0.2s',
-                      textShadow: isSelected ? `0 0 6px ${color}` : 'none',
+                      textShadow: isSelected ? `0 0 6px ${color}` : `0 0 4px rgba(255,0,255,0.3)`,
                       boxShadow: isSelected ? `0 0 8px rgba(${hexToRgb(color)}, 0.3)` : 'none',
                     }}
                     onMouseEnter={(e) => {
                       if (!isSelected) {
-                        (e.currentTarget as HTMLButtonElement).style.borderColor =
-                          'rgba(255,255,255,0.3)';
-                        (e.currentTarget as HTMLButtonElement).style.color =
-                          'rgba(255, 255, 255, 0.8)';
+                        (e.currentTarget as HTMLButtonElement).style.borderColor = color;
+                        (e.currentTarget as HTMLButtonElement).style.color = color;
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (!isSelected) {
                         (e.currentTarget as HTMLButtonElement).style.borderColor =
-                          'rgba(255,255,255,0.1)';
+                          'rgba(255,0,255,0.3)';
                         (e.currentTarget as HTMLButtonElement).style.color =
-                          'rgba(255, 255, 255, 0.4)';
+                          'rgba(255, 0, 255, 0.6)';
                       }
                     }}
                     aria-pressed={isSelected}
@@ -385,7 +383,8 @@ export default function RemoteControl() {
               style={{
                 padding: '0.75rem',
                 fontSize: '0.5rem',
-                color: 'rgba(255,255,255,0.2)',
+                color: '#ff00ff',
+                textShadow: '0 0 8px rgba(255, 0, 255, 0.6)',
                 letterSpacing: '0.15em',
                 textTransform: 'uppercase',
                 textAlign: 'center',

@@ -109,17 +109,17 @@ export const SCREEN_CONFIGS: ScreenConfig[] = [
   {
     id: 1,
     type: 'image',
-    path: '/media/doves1.jpg',
+    path: '/media/loved.jpg',
     // Top screen - portrait (900x1600) - furthest back for parallax
     position: [0, 68, -10],
     rotation: [0.05, 0, 0],
     baseSize: 26,
     aspectRatio: 900 / 1600,
-    title: 'SURVEILLANCE NODE',
+    title: 'NuWrrrld News',
     accentColor: '#00ff88',
     links: [
-      { label: 'NUWRRRLD.COM', url: 'https://nuwrrrld.com', color: '#00ff88' },
-      { label: 'GITHUB', url: 'https://github.com', color: '#00ff88' },
+      { label: 'Work with us', url: 'https://portfolio.adamaslan.com', color: '#00ff88' },
+      { label: 'GITHUB', url: 'https://github.com/adamaslan', color: '#00ff88' },
     ],
     sidePanel: {
       enabled: true,
