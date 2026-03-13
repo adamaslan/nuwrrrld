@@ -1,33 +1,29 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { SCREEN_CONFIGS } from '@/config/mediaConfig';
 import { useScreenContext } from '@/context/ScreenContext';
+import { useCameraContext } from '@/context/CameraContext';
+
+const ROTATE_STEP = 0.08;
+const ZOOM_FACTOR = 1.12;
+const REPEAT_MS = 80;
 
 /**
- * Cyberpunk-styled floating remote control overlay.
- * Works on both mobile (touch) and desktop (hover/click).
- *
- * Features:
- * - Channel selector (one button per TVScreen)
- * - Links panel for the selected screen
- * - Collapsible to a small toggle button
- * - Positioned bottom-right, above the 3D scene
+ * Cyberpunk floating remote control with orbit drag and zoom controls.
+ * Optimized for both touch (mobile) and mouse (desktop).
  */
 export default function RemoteControl() {
   const [isOpen, setIsOpen] = useState(false);
   const { selectedScreenId, toggleScreen } = useScreenContext();
+  const { rotate, zoom } = useCameraContext();
 
   const selectedConfig = SCREEN_CONFIGS.find((s) => s.id === selectedScreenId) ?? null;
 
-  const handleToggle = useCallback(() => {
-    setIsOpen((prev) => !prev);
-  }, []);
+  const handleToggle = useCallback(() => setIsOpen((prev) => !prev), []);
 
   const handleChannelClick = useCallback(
-    (id: number) => {
-      toggleScreen(id);
-    },
+    (id: number) => toggleScreen(id),
     [toggleScreen]
   );
 
@@ -109,6 +105,105 @@ export default function RemoteControl() {
             </button>
           </div>
 
+          {/* ── CAMERA CONTROLS ── */}
+          <div
+            style={{
+              padding: '0.75rem',
+              borderBottom: '1px solid rgba(0, 255, 255, 0.1)',
+            }}
+          >
+            <div
+              style={{
+                fontSize: '0.5rem',
+                letterSpacing: '0.2em',
+                color: 'rgba(0, 255, 255, 0.4)',
+                textTransform: 'uppercase',
+                marginBottom: '0.6rem',
+              }}
+            >
+              ORBIT + ZOOM
+            </div>
+
+            {/* D-pad + zoom cluster */}
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              {/* D-pad */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(3, 36px)',
+                  gridTemplateRows: 'repeat(3, 36px)',
+                  gap: '2px',
+                }}
+              >
+                {/* Row 1: _, up, _ */}
+                <div />
+                <CamBtn
+                  label="↑"
+                  title="Orbit up"
+                  onHold={() => rotate(0, ROTATE_STEP)}
+                />
+                <div />
+
+                {/* Row 2: left, center dot, right */}
+                <CamBtn
+                  label="←"
+                  title="Orbit left"
+                  onHold={() => rotate(ROTATE_STEP)}
+                />
+                {/* Center dot */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'rgba(0, 255, 255, 0.25)',
+                    fontSize: '0.5rem',
+                  }}
+                >
+                  ◉
+                </div>
+                <CamBtn
+                  label="→"
+                  title="Orbit right"
+                  onHold={() => rotate(-ROTATE_STEP)}
+                />
+
+                {/* Row 3: _, down, _ */}
+                <div />
+                <CamBtn
+                  label="↓"
+                  title="Orbit down"
+                  onHold={() => rotate(0, -ROTATE_STEP)}
+                />
+                <div />
+              </div>
+
+              {/* Zoom column */}
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '2px',
+                  marginLeft: '2px',
+                }}
+              >
+                <CamBtn
+                  label="＋"
+                  title="Zoom in"
+                  onHold={() => zoom(ZOOM_FACTOR)}
+                  accent="#00ff88"
+                />
+                <div style={{ height: '4px' }} />
+                <CamBtn
+                  label="−"
+                  title="Zoom out"
+                  onHold={() => zoom(1 / ZOOM_FACTOR)}
+                  accent="#ff6644"
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Channel selector */}
           <div
             style={{
@@ -181,7 +276,6 @@ export default function RemoteControl() {
           {/* Selected screen info + links */}
           {selectedConfig ? (
             <div style={{ padding: '0.6rem 0.75rem' }}>
-              {/* Screen title */}
               <div
                 style={{
                   fontSize: '0.6rem',
@@ -195,7 +289,6 @@ export default function RemoteControl() {
                 ▶ {selectedConfig.title ?? `SCREEN ${selectedConfig.id}`}
               </div>
 
-              {/* Links */}
               {selectedConfig.links && selectedConfig.links.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                   {selectedConfig.links.map((link, i) => {
@@ -254,7 +347,6 @@ export default function RemoteControl() {
                 </div>
               )}
 
-              {/* Status row */}
               <div
                 style={{
                   marginTop: '0.6rem',
@@ -346,7 +438,6 @@ export default function RemoteControl() {
         aria-label={isOpen ? 'Close control panel' : 'Open control panel'}
         aria-expanded={isOpen}
       >
-        {/* Remote icon: 3 horizontal bars */}
         <svg
           width="18"
           height="14"
@@ -364,7 +455,84 @@ export default function RemoteControl() {
   );
 }
 
-/** Convert a hex color string to "r, g, b" for use in rgba() */
+// ─── CamBtn ──────────────────────────────────────────────────────────────────
+
+interface CamBtnProps {
+  label: string;
+  title: string;
+  onHold: () => void;
+  accent?: string;
+}
+
+/**
+ * Camera control button that fires continuously while held (pointer down).
+ * Works on both touch and mouse via pointer events.
+ */
+function CamBtn({ label, title, onHold, accent = '#00ffff' }: CamBtnProps) {
+  const [active, setActive] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const startHold = useCallback(() => {
+    onHold();
+    setActive(true);
+    intervalRef.current = setInterval(onHold, REPEAT_MS);
+  }, [onHold]);
+
+  const stopHold = useCallback(() => {
+    setActive(false);
+    if (intervalRef.current !== null) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
+
+  // Clean up on unmount
+  useEffect(() => () => stopHold(), [stopHold]);
+
+  const rgb = hexToRgb(accent);
+
+  return (
+    <button
+      aria-label={title}
+      title={title}
+      onPointerDown={(e) => {
+        e.currentTarget.setPointerCapture(e.pointerId);
+        startHold();
+      }}
+      onPointerUp={stopHold}
+      onPointerLeave={stopHold}
+      onPointerCancel={stopHold}
+      style={{
+        width: '36px',
+        height: '36px',
+        borderRadius: '4px',
+        border: `1px solid ${active ? accent : `rgba(${rgb}, 0.3)`}`,
+        background: active
+          ? `rgba(${rgb}, 0.25)`
+          : `rgba(${rgb}, 0.06)`,
+        color: active ? accent : `rgba(${rgb}, 0.7)`,
+        fontSize: '1rem',
+        lineHeight: 1,
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'background 0.1s, border-color 0.1s, color 0.1s',
+        boxShadow: active ? `0 0 10px rgba(${rgb}, 0.45)` : 'none',
+        textShadow: active ? `0 0 8px ${accent}` : 'none',
+        // No text selection on hold
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        touchAction: 'none',
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
+// ─── helpers ─────────────────────────────────────────────────────────────────
+
 function hexToRgb(hex: string): string {
   const clean = hex.replace('#', '');
   const r = parseInt(clean.slice(0, 2), 16);
