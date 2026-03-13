@@ -115,11 +115,11 @@ export const SCREEN_CONFIGS: ScreenConfig[] = [
     rotation: [0.05, 0, 0],
     baseSize: 26,
     aspectRatio: 900 / 1600,
-    title: 'SURVEILLANCE NODE',
+    title: 'NuWrrrld News',
     accentColor: '#00ff88',
     links: [
-      { label: 'NUWRRRLD.COM', url: 'https://nuwrrrld.com', color: '#00ff88' },
-      { label: 'GITHUB', url: 'https://github.com', color: '#00ff88' },
+      { label: 'Workwithus', url: 'https://portfolio.adamaslan.com, color: '#00ff88' },
+      { label: 'GITHUB', url: 'https://github.com/adamaslan', color: '#00ff88' },
     ],
     sidePanel: {
       enabled: true,
