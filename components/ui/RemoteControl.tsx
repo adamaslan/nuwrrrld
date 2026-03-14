@@ -22,6 +22,13 @@ export default function RemoteControl() {
 
   const handleToggle = useCallback(() => setIsOpen((prev) => !prev), []);
 
+  // Auto-open panel when a screen is selected (tap/click on screen)
+  useEffect(() => {
+    if (selectedScreenId !== null) {
+      setIsOpen(true);
+    }
+  }, [selectedScreenId]);
+
   const handleChannelClick = useCallback(
     (id: number) => toggleScreen(id),
     [toggleScreen]
