@@ -7,7 +7,10 @@ import { useCameraContext } from '@/context/CameraContext';
 
 const ROTATE_STEP = 0.08;
 const ZOOM_FACTOR = 1.12;
+const PAN_STEP = 0.4;
 const REPEAT_MS = 80;
+
+type AxisMode = 'orbit' | 'x' | 'y' | 'z';
 
 /**
  * Cyberpunk floating remote control with orbit drag and zoom controls.
@@ -15,8 +18,9 @@ const REPEAT_MS = 80;
  */
 export default function RemoteControl() {
   const [isOpen, setIsOpen] = useState(false);
+  const [axisMode, setAxisMode] = useState<AxisMode>('orbit');
   const { selectedScreenId, toggleScreen } = useScreenContext();
-  const { rotate, zoom } = useCameraContext();
+  const { rotate, zoom, pan } = useCameraContext();
 
   const selectedConfig = SCREEN_CONFIGS.find((s) => s.id === selectedScreenId) ?? null;
 
@@ -119,16 +123,84 @@ export default function RemoteControl() {
               borderBottom: '1px solid rgba(0, 255, 255, 0.1)',
             }}
           >
+            {/* Mode selector tabs */}
             <div
               style={{
-                fontSize: '0.5rem',
-                letterSpacing: '0.2em',
-                color: 'rgba(0, 255, 255, 0.4)',
-                textTransform: 'uppercase',
+                display: 'flex',
+                gap: '2px',
                 marginBottom: '0.6rem',
               }}
             >
-              ORBIT + ZOOM
+              {(
+                [
+                  { id: 'orbit', label: '⟳ ORBIT', color: '#00ffff' },
+                  { id: 'x', label: 'X', color: '#ff4466' },
+                  { id: 'y', label: 'Y', color: '#44ff88' },
+                  { id: 'z', label: 'Z', color: '#4488ff' },
+                ] as { id: AxisMode; label: string; color: string }[]
+              ).map(({ id, label, color }) => {
+                const active = axisMode === id;
+                const rgb = hexToRgb(color);
+                return (
+                  <button
+                    key={id}
+                    onClick={() => setAxisMode(id)}
+                    style={{
+                      flex: 1,
+                      padding: '0.25rem 0',
+                      fontSize: '0.5rem',
+                      letterSpacing: '0.12em',
+                      fontFamily: "'Courier New', monospace",
+                      textTransform: 'uppercase',
+                      cursor: 'pointer',
+                      background: active ? `rgba(${rgb}, 0.18)` : 'rgba(255,255,255,0.03)',
+                      border: `1px solid ${active ? color : `rgba(${rgb}, 0.25)`}`,
+                      borderRadius: '3px',
+                      color: active ? color : `rgba(${rgb}, 0.5)`,
+                      textShadow: active ? `0 0 8px ${color}` : 'none',
+                      boxShadow: active ? `0 0 8px rgba(${rgb}, 0.3)` : 'none',
+                      transition: 'all 0.15s',
+                    }}
+                    title={
+                      id === 'orbit'
+                        ? 'Orbit (rotate around target)'
+                        : id === 'x'
+                        ? 'Pan on X axis (left/right)'
+                        : id === 'y'
+                        ? 'Pan on Y axis (up/down)'
+                        : 'Pan on Z axis (forward/back)'
+                    }
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Mode label */}
+            <div
+              style={{
+                fontSize: '0.45rem',
+                letterSpacing: '0.18em',
+                color:
+                  axisMode === 'orbit'
+                    ? 'rgba(0,255,255,0.35)'
+                    : axisMode === 'x'
+                    ? 'rgba(255,68,102,0.5)'
+                    : axisMode === 'y'
+                    ? 'rgba(68,255,136,0.5)'
+                    : 'rgba(68,136,255,0.5)',
+                textTransform: 'uppercase',
+                marginBottom: '0.5rem',
+              }}
+            >
+              {axisMode === 'orbit'
+                ? '← → AZIMUTH  ↑ ↓ POLAR'
+                : axisMode === 'x'
+                ? '← → MOVE X AXIS'
+                : axisMode === 'y'
+                ? '↑ ↓ MOVE Y AXIS'
+                : '↑ ↓ MOVE Z AXIS'}
             </div>
 
             {/* D-pad + zoom cluster */}
@@ -146,41 +218,126 @@ export default function RemoteControl() {
                 <div />
                 <CamBtn
                   label="↑"
-                  title="Orbit up"
-                  onHold={() => rotate(0, ROTATE_STEP)}
+                  title={
+                    axisMode === 'orbit'
+                      ? 'Orbit up'
+                      : axisMode === 'y'
+                      ? 'Move camera up (+Y)'
+                      : axisMode === 'z'
+                      ? 'Move camera forward (-Z)'
+                      : 'Orbit up'
+                  }
+                  accent={
+                    axisMode === 'orbit'
+                      ? '#00ffff'
+                      : axisMode === 'x'
+                      ? '#ff4466'
+                      : axisMode === 'y'
+                      ? '#44ff88'
+                      : '#4488ff'
+                  }
+                  onHold={() => {
+                    if (axisMode === 'orbit') rotate(0, ROTATE_STEP);
+                    else if (axisMode === 'y') pan(0, PAN_STEP, 0);
+                    else if (axisMode === 'z') pan(0, 0, -PAN_STEP);
+                  }}
                 />
                 <div />
 
                 {/* Row 2: left, center dot, right */}
                 <CamBtn
                   label="←"
-                  title="Orbit left"
-                  onHold={() => rotate(ROTATE_STEP)}
+                  title={
+                    axisMode === 'orbit'
+                      ? 'Orbit left'
+                      : axisMode === 'x'
+                      ? 'Move camera left (-X)'
+                      : 'Orbit left'
+                  }
+                  accent={
+                    axisMode === 'orbit'
+                      ? '#00ffff'
+                      : axisMode === 'x'
+                      ? '#ff4466'
+                      : axisMode === 'y'
+                      ? '#44ff88'
+                      : '#4488ff'
+                  }
+                  onHold={() => {
+                    if (axisMode === 'orbit') rotate(ROTATE_STEP);
+                    else if (axisMode === 'x') pan(-PAN_STEP, 0, 0);
+                  }}
                 />
-                {/* Center dot */}
+                {/* Center indicator */}
                 <div
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: 'rgba(0, 255, 255, 0.25)',
+                    color:
+                      axisMode === 'orbit'
+                        ? 'rgba(0,255,255,0.25)'
+                        : axisMode === 'x'
+                        ? 'rgba(255,68,102,0.4)'
+                        : axisMode === 'y'
+                        ? 'rgba(68,255,136,0.4)'
+                        : 'rgba(68,136,255,0.4)',
                     fontSize: '0.5rem',
                   }}
                 >
-                  ◉
+                  {axisMode === 'orbit' ? '◉' : axisMode === 'x' ? 'X' : axisMode === 'y' ? 'Y' : 'Z'}
                 </div>
                 <CamBtn
                   label="→"
-                  title="Orbit right"
-                  onHold={() => rotate(-ROTATE_STEP)}
+                  title={
+                    axisMode === 'orbit'
+                      ? 'Orbit right'
+                      : axisMode === 'x'
+                      ? 'Move camera right (+X)'
+                      : 'Orbit right'
+                  }
+                  accent={
+                    axisMode === 'orbit'
+                      ? '#00ffff'
+                      : axisMode === 'x'
+                      ? '#ff4466'
+                      : axisMode === 'y'
+                      ? '#44ff88'
+                      : '#4488ff'
+                  }
+                  onHold={() => {
+                    if (axisMode === 'orbit') rotate(-ROTATE_STEP);
+                    else if (axisMode === 'x') pan(PAN_STEP, 0, 0);
+                  }}
                 />
 
                 {/* Row 3: _, down, _ */}
                 <div />
                 <CamBtn
                   label="↓"
-                  title="Orbit down"
-                  onHold={() => rotate(0, -ROTATE_STEP)}
+                  title={
+                    axisMode === 'orbit'
+                      ? 'Orbit down'
+                      : axisMode === 'y'
+                      ? 'Move camera down (-Y)'
+                      : axisMode === 'z'
+                      ? 'Move camera back (+Z)'
+                      : 'Orbit down'
+                  }
+                  accent={
+                    axisMode === 'orbit'
+                      ? '#00ffff'
+                      : axisMode === 'x'
+                      ? '#ff4466'
+                      : axisMode === 'y'
+                      ? '#44ff88'
+                      : '#4488ff'
+                  }
+                  onHold={() => {
+                    if (axisMode === 'orbit') rotate(0, -ROTATE_STEP);
+                    else if (axisMode === 'y') pan(0, -PAN_STEP, 0);
+                    else if (axisMode === 'z') pan(0, 0, PAN_STEP);
+                  }}
                 />
                 <div />
               </div>
