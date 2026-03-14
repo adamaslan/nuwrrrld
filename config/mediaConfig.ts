@@ -155,7 +155,7 @@ export const SCREEN_CONFIGS: ScreenConfig[] = [
       enabled: true,
       position: 'right',
       widthRatio: 0.85,
-      text: 'Liminal Electronic\n\nSystem Status: OK\n Music Type: Ambient\n2nd: Minimal',
+      text: 'Liminal Electronic\n\nSystem Status: OK\nMusic Type: Ambient\n2nd: Minimal',
       textColor: '#00ffff',
       textSize: 1.25,
       textAlign: 'center',
@@ -179,7 +179,7 @@ export const SCREEN_CONFIGS: ScreenConfig[] = [
     accentColor: '#ff00ff',
     links: [
       { label: 'PROJECT DOCS', url: 'https://zxygallery.com', color: '#ff00ff' },
-      { label: 'CONTACT via Instagram', url: '@zxygallery', color: '#ff00ff' },
+      { label: 'CONTACT via Instagram', url: 'https://www.instagram.com/zxygallery', color: '#ff00ff' },
     ],
     sidePanel: {
       enabled: true,
