@@ -125,7 +125,7 @@ export const SCREEN_CONFIGS: ScreenConfig[] = [
       enabled: true,
       position: 'right',
       widthRatio: 0.85,
-      text: 'NuWrrrld News\n\nStatus: ACTIVE\nFeatured: PROJECT ALPHA\nFeed: PRIMARY',
+      text: 'NuWrrrld News\n\nStatus: ACTIVE\nFeatured Projects\nclick for info',
       textColor: '#00ff88',
       textSize: 1.28,
       textAlign: 'center',
@@ -178,7 +178,7 @@ export const SCREEN_CONFIGS: ScreenConfig[] = [
     title: 'ZXY Gallery',
     accentColor: '#ff00ff',
     links: [
-      { label: 'PROJECT DOCS', url: 'https://zxygallery.com', color: '#ff00ff' },
+      { label: 'website', url: 'https://zxygallery.com', color: '#ff00ff' },
       { label: 'CONTACT via Instagram', url: 'https://www.instagram.com/zxygallery', color: '#ff00ff' },
     ],
     sidePanel: {
