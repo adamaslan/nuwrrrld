@@ -48,7 +48,7 @@ function GradientSkyDome() {
   }, []);
 
   return (
-    <mesh ref={meshRef} scale={[200, 200, 200]}>
+    <mesh ref={meshRef} scale={[600, 600, 600]}>
       <sphereGeometry args={[1, 32, 32]} />
       <primitive object={gradientMaterial} attach="material" />
     </mesh>
@@ -75,7 +75,7 @@ export default function SceneContent() {
           enableZoom={true}
           enableRotate={true}
           minDistance={5}
-          maxDistance={100}
+          maxDistance={300}
           minPolarAngle={0.2}
           maxPolarAngle={Math.PI - 0.2}
           target={[0, 0, -5]}

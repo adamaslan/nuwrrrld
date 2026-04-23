@@ -21,6 +21,8 @@ import FogLayers from './environment/atmosphere/FogLayers';
 import HolographicElements from './environment/decorations/HolographicElements';
 import AnimatedBillboards from './environment/decorations/AnimatedBillboards';
 import Puddles from './environment/decorations/Puddles';
+import CyberpunkBridge, { DEFAULT_BRIDGE_CONFIG } from './environment/decorations/CyberpunkBridge';
+import BridgeRobots, { DEFAULT_ROBOT_CONFIG } from './environment/decorations/BridgeRobots';
 
 // Dynamic Elements
 import FlyingShips from './environment/ships/FlyingShips';
@@ -78,6 +80,19 @@ export default function Environment() {
       <HolographicElements />
       <AnimatedBillboards />
       <Puddles />
+
+      {/* Bridge with walking robots */}
+      <group
+        position={DEFAULT_BRIDGE_CONFIG.position}
+        rotation={[0, DEFAULT_BRIDGE_CONFIG.rotationY, 0]}
+      >
+        <CyberpunkBridge config={DEFAULT_BRIDGE_CONFIG} />
+        <BridgeRobots
+          bridgeLength={DEFAULT_BRIDGE_CONFIG.length}
+          config={DEFAULT_ROBOT_CONFIG}
+          deckY={0.8}
+        />
+      </group>
 
       {/* Dynamic elements */}
       <FlyingShips />

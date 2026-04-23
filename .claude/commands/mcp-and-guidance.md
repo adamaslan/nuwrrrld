@@ -143,5 +143,37 @@ From Mamba Rules:
 
 ---
 
-**Last Updated**: January 28, 2026
-**Scope**: User-level and project-level guidance
+## Wiki Knowledge Base
+
+This project maintains an LLM-curated wiki at `docs/wiki/`. The wiki is the primary synthesis layer — entity pages, concept pages, decisions, and architecture docs are maintained here. See `docs/wiki/ORIGIN.md` for the philosophy behind this pattern.
+
+**Quick wiki operations:**
+- `/wiki ingest <path>` — read a source file and integrate knowledge into wiki pages
+- `/wiki query <question>` — query the wiki with citations from entity/concept pages
+- `/wiki lint` — find orphan pages, missing sections, and stale claims
+
+**Key wiki pages:**
+- `docs/wiki/index.md` — full catalog of every page
+- `docs/wiki/overview.md` — system map, tech stack, component hierarchy
+- `docs/wiki/SCHEMA.md` — wiki conventions and page type requirements
+- `docs/wiki/ORIGIN.md` — why the LLM-maintained wiki pattern works
+
+**When working on the project:**
+1. Check the relevant entity page first (e.g., `docs/wiki/entity-ships.md` before modifying ships)
+2. After implementing a feature, update the entity page with new facts
+3. If you made a design decision, create a `decision-*.md` page in `docs/wiki/`
+4. Append to `docs/wiki/log.md` with what was ingested or changed
+
+**Entity pages (the hubs):**
+- `entity-scene.md` — canvas, contexts, postprocessing, lighting
+- `entity-ships.md` — 16-ship fleet, ShipConfig, animation
+- `entity-buildings.md` — 16 buildings, procedural generation, windows
+- `entity-screens.md` — 3 TV screens, mediaConfig, interaction
+- `entity-layers.md` — 4 depth layers, Z-ranges, parallax
+- `entity-pools.md` — GeometryPool, MaterialPool, PoolContext
+- `entity-commands.md` — all 12 slash commands
+
+---
+
+**Last Updated**: 2026-04-23
+**Scope**: User-level and project-level guidance + wiki knowledge base
