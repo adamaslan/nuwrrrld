@@ -1,4 +1,4 @@
-export type MediaType = 'image' | 'video';
+export type MediaType = 'image' | 'video' | 'canvas';
 export type TextAlign = 'top' | 'center' | 'bottom';
 export type PanelPosition = 'left' | 'right';
 
@@ -194,6 +194,62 @@ export const SCREEN_CONFIGS: ScreenConfig[] = [
       glowEnabled: true,
       glowColor: '#ff00ff',
       glowIntensity: 0.4,
+    },
+  },
+  {
+    id: 4,
+    type: 'canvas',
+    path: '',
+    position: [-28, 35, -30],
+    rotation: [0, 0.3, 0],
+    baseSize: 18,
+    aspectRatio: 900 / 1600,
+    title: 'Archive',
+    accentColor: '#ffaa00',
+    links: [
+      { label: 'Archive', url: 'https://archive.org', color: '#ffaa00' },
+    ],
+    sidePanel: {
+      enabled: true,
+      position: 'right',
+      widthRatio: 0.85,
+      text: 'Archive\n\nStatus: ACTIVE\nAll Media\nclick for info',
+      textColor: '#ffaa00',
+      textSize: 1.1,
+      textAlign: 'center',
+      backgroundColor: '#2a1a0a',
+      backgroundOpacity: 0.9,
+      glowEnabled: true,
+      glowColor: '#ffaa00',
+      glowIntensity: 0.5,
+    },
+  },
+  {
+    id: 5,
+    type: 'image',
+    path: '/media/loved.jpg',
+    position: [28, 28, -25],
+    rotation: [0, -0.3, 0],
+    baseSize: 18,
+    aspectRatio: 900 / 1600,
+    title: 'NuWrrrld Financial',
+    accentColor: '#00ffff',
+    links: [
+      { label: 'NuWrrrld Financial', url: 'https://financial.nuwrrrld.com', color: '#00ffff' },
+    ],
+    sidePanel: {
+      enabled: true,
+      position: 'left',
+      widthRatio: 0.85,
+      text: 'NuWrrrld\nFinancial\n\nMarkets: LIVE\nData: REAL-TIME',
+      textColor: '#00ffff',
+      textSize: 1.1,
+      textAlign: 'center',
+      backgroundColor: '#0a1a2a',
+      backgroundOpacity: 0.9,
+      glowEnabled: true,
+      glowColor: '#00ffff',
+      glowIntensity: 0.5,
     },
   },
 ];

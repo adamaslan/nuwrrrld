@@ -19,7 +19,7 @@ export default function Scene() {
       camera={{
         fov: 60,
         near: 0.1,
-        far: 300,
+        far: 800,
         position: [0, 5, 25],
       }}
       style={{
@@ -28,7 +28,7 @@ export default function Scene() {
         touchAction: 'none',
       }}
     >
-      <fog attach="fog" args={['#0a0510', 50, 200]} />
+      <fog attach="fog" args={['#0a0510', 150, 600]} />
       <Suspense fallback={null}>
         <SceneContent />
         <PostProcessing />

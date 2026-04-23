@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import type { ScreenConfig } from '@/config/mediaConfig';
 import { RESPONSIVE_SCALE, OPACITY, CYBERPUNK_COLORS } from '@/config/constants';
 import SideScreen from './SideScreen';
+import NuWrrrldMorphTexture from './NuWrrrldMorphTexture';
 import { usePools } from './pools';
 import { useScreenContext } from '@/context/ScreenContext';
 
@@ -726,9 +727,12 @@ function ImageMedia({ path }: { path: string }) {
   );
 }
 
-function ScreenMedia({ type, path }: { type: 'image' | 'video'; path: string }) {
+function ScreenMedia({ type, path }: { type: 'image' | 'video' | 'canvas'; path: string }) {
   if (type === 'video') {
     return <VideoMedia path={path} />;
+  }
+  if (type === 'canvas') {
+    return <NuWrrrldMorphTexture />;
   }
   return <ImageMedia path={path} />;
 }

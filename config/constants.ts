@@ -50,9 +50,9 @@ export const RESPONSIVE_SCALE = {
  */
 export const SCENE_DIMENSIONS = {
   /** Ground plane width in units */
-  GROUND_PLANE_WIDTH: 300,
+  GROUND_PLANE_WIDTH: 900,
   /** Ground plane depth in units */
-  GROUND_PLANE_HEIGHT: 375,
+  GROUND_PLANE_HEIGHT: 1125,
 
   // Element counts (optimized from initial higher values)
   /** Number of foreground debris particles */
@@ -173,8 +173,8 @@ export const DEPTH_LAYERS = {
   MAIN_END: -20,
 
   /** Deep background (-60 to -100) */
-  BACKGROUND_START: -60,
-  BACKGROUND_END: -100,
+  BACKGROUND_START: -180,
+  BACKGROUND_END: -300,
 
   /** Reverse-facing layer (+25 to +65) */
   OPPOSITE_START: 25,

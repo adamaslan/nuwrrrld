@@ -28,16 +28,16 @@ export default function CityBuildings() {
     };
 
     for (let i = 0; i < SCENE_DIMENSIONS.LEFT_BUILDINGS; i++) {
-      const height = 25 + randomFn(i) * 50;
+      const height = 75 + randomFn(i) * 150;
       const width = 3 + randomFn(i + 100) * 4;
       const depth = 3 + randomFn(i + 200) * 4;
       const colors = ['#00ffff', '#ff00ff', '#ffaa00', '#00ff88'] as const;
 
       buildings.push({
         position: [
-          -12 - i * 6 + randomFn(i + 300) * 2,
+          -36 - i * 18 + randomFn(i + 300) * 6,
           height / 2 - 2,
-          -12 - randomFn(i + 400) * 20,
+          -36 - randomFn(i + 400) * 60,
         ] as [number, number, number],
         size: [width, height, depth] as [number, number, number],
         windowColor: colors[Math.floor(randomFn(i + 500) * 4)],
@@ -58,16 +58,16 @@ export default function CityBuildings() {
     };
 
     for (let i = 0; i < SCENE_DIMENSIONS.RIGHT_BUILDINGS; i++) {
-      const height = 25 + randomFn(i) * 50;
+      const height = 75 + randomFn(i) * 150;
       const width = 3 + randomFn(i + 100) * 4;
       const depth = 3 + randomFn(i + 200) * 4;
       const colors = ['#00ffff', '#ff00ff', '#ffaa00', '#00ff88'] as const;
 
       buildings.push({
         position: [
-          12 + i * 6 + randomFn(i + 300) * 2,
+          36 + i * 18 + randomFn(i + 300) * 6,
           height / 2 - 2,
-          -12 - randomFn(i + 400) * 20,
+          -36 - randomFn(i + 400) * 60,
         ] as [number, number, number],
         size: [width, height, depth] as [number, number, number],
         windowColor: colors[Math.floor(randomFn(i + 500) * 4)],
@@ -88,16 +88,16 @@ export default function CityBuildings() {
     };
 
     for (let i = 0; i < SCENE_DIMENSIONS.BACKGROUND_BUILDINGS; i++) {
-      const height = 50 + randomFn(i) * 70;
+      const height = 150 + randomFn(i) * 210;
       const width = 5 + randomFn(i + 100) * 6;
       const depth = 5 + randomFn(i + 200) * 6;
       const colors = ['#00ffff', '#ff00ff', '#ffaa00', '#00ff88'] as const;
 
       buildings.push({
         position: [
-          -30 + i * 10 + randomFn(i + 300) * 3,
+          -90 + i * 30 + randomFn(i + 300) * 9,
           height / 2 - 2,
-          -35 - randomFn(i + 400) * 15,
+          -105 - randomFn(i + 400) * 45,
         ] as [number, number, number],
         size: [width, height, depth] as [number, number, number],
         windowColor: colors[Math.floor(randomFn(i + 500) * 4)],
