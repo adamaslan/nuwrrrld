@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -51,6 +51,12 @@ export default function CyberpunkBridge({ config = DEFAULT_BRIDGE_CONFIG }: Cybe
 
   const accentColorObj = useMemo(() => new THREE.Color(accentColor), [accentColor]);
   const structureColorObj = useMemo(() => new THREE.Color(structureColor), [structureColor]);
+
+  useEffect(() => {
+    return () => {
+      cableMat.dispose();
+    };
+  }, [cableMat]);
 
   useFrame(({ clock }, delta) => {
     const t = clock.getElapsedTime();

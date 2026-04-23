@@ -9,18 +9,18 @@ const COLORS = ['#FF0055', '#00FFCC', '#FFFF00', '#8800FF'];
 const CHARS = 'nuwrrrld'.split('');
 const CANVAS_W = 512;
 const CANVAS_H = 512;
-const MODE_DURATION = 2000;
+const MODE_DURATION_S = 2.0;
+// Lerp factor expressed as a per-second rate: lerp = 1 - (1 - BASE_RATE)^(delta*60)
+const LERP_RATE = 0.08;
 
 type Mode = 'word' | 'shape1' | 'shape2';
 
 interface ParticleData {
   char: string;
   color: string;
-  // stable seeded target positions per mode
   word: { x: number; y: number };
   shape1: { x: number; y: number };
   shape2: { x: number; y: number };
-  // current animated position
   cx: number;
   cy: number;
 }
@@ -61,9 +61,8 @@ export default function NuWrrrldMorphTexture() {
   const textureRef = useRef<THREE.CanvasTexture | null>(null);
   const particlesRef = useRef<ParticleData[]>(buildParticles());
   const modeRef = useRef<Mode>('word');
-  const lastSwitchRef = useRef<number>(Date.now());
+  const modeElapsedRef = useRef<number>(0);
 
-  // Build canvas + texture once
   const texture = useMemo(() => {
     const canvas = document.createElement('canvas');
     canvas.width = CANVAS_W;
@@ -76,16 +75,23 @@ export default function NuWrrrldMorphTexture() {
     return tex;
   }, []);
 
-  useFrame(() => {
-    const now = Date.now();
-    if (now - lastSwitchRef.current > MODE_DURATION) {
+  // Dispose GPU texture on unmount
+  useEffect(() => {
+    return () => {
+      textureRef.current?.dispose();
+    };
+  }, []);
+
+  useFrame((_, delta) => {
+    modeElapsedRef.current += delta;
+    if (modeElapsedRef.current >= MODE_DURATION_S) {
       modeRef.current =
         modeRef.current === 'word'
           ? 'shape1'
           : modeRef.current === 'shape1'
           ? 'shape2'
           : 'word';
-      lastSwitchRef.current = now;
+      modeElapsedRef.current = 0;
     }
 
     const canvas = canvasRef.current;
@@ -95,17 +101,18 @@ export default function NuWrrrldMorphTexture() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Clear
+    // Frame-rate independent lerp: same apparent speed at any refresh rate
+    const alpha = 1 - Math.pow(1 - LERP_RATE, delta * 60);
+
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
-    // Lerp each particle toward its target
     const mode = modeRef.current;
     ctx.font = 'bold 11px monospace';
     for (const p of particlesRef.current) {
       const target = targetForMode(p, mode);
-      p.cx += (target.x - p.cx) * 0.08;
-      p.cy += (target.y - p.cy) * 0.08;
+      p.cx += (target.x - p.cx) * alpha;
+      p.cy += (target.y - p.cy) * alpha;
       ctx.fillStyle = p.color;
       ctx.fillText(p.char, p.cx, p.cy);
     }
