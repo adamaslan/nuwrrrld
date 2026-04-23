@@ -3,6 +3,7 @@
 import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { seededRandom } from '../utils/seededRandom';
 
 export interface RobotConfig {
   count: number;
@@ -30,10 +31,6 @@ interface BridgeRobotsProps {
   deckY?: number;
 }
 
-function seededRand(seed: number): number {
-  const x = Math.sin(seed) * 10000;
-  return x - Math.floor(x);
-}
 
 interface RobotRefs {
   group: THREE.Group | null;
@@ -67,15 +64,26 @@ export default function BridgeRobots({
   const bodyColorObj = useMemo(() => new THREE.Color(bodyColor), [bodyColor]);
   const eyeColorObj = useMemo(() => new THREE.Color(eyeColor), [eyeColor]);
 
+  const sensorDotGeo = useMemo(() => new THREE.SphereGeometry(0.04, 4, 4), []);
+  const sensorDotMat = useMemo(
+    () =>
+      new THREE.MeshStandardMaterial({
+        color: new THREE.Color(eyeColor),
+        emissive: new THREE.Color(eyeColor),
+        emissiveIntensity: 0.8,
+      }),
+    [eyeColor]
+  );
+
   const robotVariants = useMemo(
     () =>
       Array.from({ length: count }, (_, i) => ({
         phaseOffset: (i / count) * bridgeLength,
-        hasAntenna: seededRand(seed + i * 13) > 0.5,
-        hasShoulderPads: seededRand(seed + i * 17) > 0.4,
-        hasBackFin: seededRand(seed + i * 23) > 0.7,
-        hasShoulderSpikes: seededRand(seed + i * 29) > 0.5,
-        sensorDotCount: 3 + Math.floor(seededRand(seed + i * 31) * 3),
+        hasAntenna: seededRandom(seed, i * 13) > 0.5,
+        hasShoulderPads: seededRandom(seed, i * 17) > 0.4,
+        hasBackFin: seededRandom(seed, i * 23) > 0.7,
+        hasShoulderSpikes: seededRandom(seed, i * 29) > 0.5,
+        sensorDotCount: 3 + Math.floor(seededRandom(seed, i * 31) * 3),
       })),
     [count, bridgeLength, seed]
   );
@@ -156,10 +164,9 @@ export default function BridgeRobots({
                 0.15,
                 0.21,
               ]}
-            >
-              <sphereGeometry args={[0.04, 4, 4]} />
-              <meshStandardMaterial color={eyeColorObj} emissive={eyeColorObj} emissiveIntensity={0.8} />
-            </mesh>
+              geometry={sensorDotGeo}
+              material={sensorDotMat}
+            />
           ))}
 
           {/* Shoulder pads */}

@@ -37,13 +37,22 @@ export default function CyberpunkBridge({ config = DEFAULT_BRIDGE_CONFIG }: Cybe
 
   const navLightRefs = useRef<THREE.Mesh[]>([]);
   const deckLightRefs = useRef<THREE.Mesh[]>([]);
-  const cableMatRef = useRef<THREE.MeshStandardMaterial>(null);
   const warningDeltaRefs = useRef<THREE.Mesh[]>([]);
+
+  const cableMat = useMemo(
+    () =>
+      new THREE.MeshStandardMaterial({
+        color: new THREE.Color(accentColor),
+        emissive: new THREE.Color(accentColor),
+        emissiveIntensity: glowIntensity,
+      }),
+    [accentColor, glowIntensity]
+  );
 
   const accentColorObj = useMemo(() => new THREE.Color(accentColor), [accentColor]);
   const structureColorObj = useMemo(() => new THREE.Color(structureColor), [structureColor]);
 
-  useFrame(({ clock }) => {
+  useFrame(({ clock }, delta) => {
     const t = clock.getElapsedTime();
 
     navLightRefs.current.forEach((mesh) => {
@@ -60,13 +69,10 @@ export default function CyberpunkBridge({ config = DEFAULT_BRIDGE_CONFIG }: Cybe
       }
     });
 
-    if (cableMatRef.current) {
-      cableMatRef.current.emissiveIntensity =
-        glowIntensity * (0.7 + Math.sin(t * 0.8) * 0.3);
-    }
+    cableMat.emissiveIntensity = glowIntensity * (0.7 + Math.sin(t * 0.8) * 0.3);
 
     warningDeltaRefs.current.forEach((mesh) => {
-      if (mesh) mesh.rotation.y += 0.2 * 0.016;
+      if (mesh) mesh.rotation.y += 0.2 * delta;
     });
   });
 
@@ -172,18 +178,10 @@ export default function CyberpunkBridge({ config = DEFAULT_BRIDGE_CONFIG }: Cybe
         const t = i / (cableCount - 1);
         const sag = Math.sin(t * Math.PI) * towerHeight * 0.6;
         const cableY = towerHeight - sag;
-        const cableLen = Math.sqrt(
-          Math.pow(towerHeight - cableY, 2) + Math.pow(x - (-length / 2), 2)
-        );
         return (
           <mesh key={`cable-${i}`} position={[x, cableY / 2 + 0.4, 0]}>
             <cylinderGeometry args={[0.1, 0.1, cableY, 4]} />
-            <meshStandardMaterial
-              ref={i === 0 ? cableMatRef : undefined}
-              color={accentColorObj}
-              emissive={accentColorObj}
-              emissiveIntensity={glowIntensity}
-            />
+            <primitive object={cableMat} attach="material" />
           </mesh>
         );
       })}
