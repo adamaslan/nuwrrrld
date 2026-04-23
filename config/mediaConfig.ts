@@ -1,4 +1,4 @@
-export type MediaType = 'image' | 'video';
+export type MediaType = 'image' | 'video' | 'canvas';
 export type TextAlign = 'top' | 'center' | 'bottom';
 export type PanelPosition = 'left' | 'right';
 
@@ -198,8 +198,8 @@ export const SCREEN_CONFIGS: ScreenConfig[] = [
   },
   {
     id: 4,
-    type: 'image',
-    path: '/media/loved.jpg',
+    type: 'canvas',
+    path: '',
     position: [-28, 35, -30],
     rotation: [0, 0.3, 0],
     baseSize: 18,
