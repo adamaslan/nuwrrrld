@@ -122,10 +122,25 @@ export default function NuWrrrldMorphTexture({ variant = 'archive' }: NuWrrrldMo
 
   const wordPositions = useMemo(() => buildWordPositions('nuwrrrld'), []);
   const labelPositions = useMemo(() => buildWordPositions(labelText), [labelText]);
-  const particlesRef = useRef<ParticleData[]>(buildParticles(wordPositions, labelPositions, labelText));
+
+  // Lazy init: useRef initializer runs every render but only the first value is kept.
+  // Using null! + guard means buildParticles only runs once at mount.
+  const particlesRef = useRef<ParticleData[]>(null!);
+  if (!particlesRef.current) {
+    particlesRef.current = buildParticles(wordPositions, labelPositions, labelText);
+  }
 
   useEffect(() => {
-    particlesRef.current = buildParticles(wordPositions, labelPositions, labelText);
+    const oldParticles = particlesRef.current;
+    const newParticles = buildParticles(wordPositions, labelPositions, labelText);
+    // Preserve current cx/cy so particles lerp from where they are rather than snapping to word start
+    for (let i = 0; i < newParticles.length; i++) {
+      if (oldParticles[i]) {
+        newParticles[i].cx = oldParticles[i].cx;
+        newParticles[i].cy = oldParticles[i].cy;
+      }
+    }
+    particlesRef.current = newParticles;
   }, [wordPositions, labelPositions, labelText]);
 
   const texture = useMemo(() => {
