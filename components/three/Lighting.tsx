@@ -3,7 +3,7 @@
 import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { LIGHT_INTENSITY, CYBERPUNK_COLORS } from '@/config/constants';
+import { LIGHT_INTENSITY, CYBERPUNK_COLORS, CITY_LIGHTS } from '@/config/constants';
 
 /**
  * Scene lighting component providing cyberpunk-style illumination.
@@ -82,11 +82,11 @@ export default function Lighting() {
       <pointLight position={[6, 4, -4]} intensity={LIGHT_INTENSITY.SPOT} color={CYBERPUNK_COLORS.GREEN} distance={20} />
 
       {/* City background atmospheric glow — positions and distances scaled to match wider building spread */}
-      <pointLight position={[-60, 35, -70]} intensity={1.06} color={CYBERPUNK_COLORS.MAGENTA} distance={160} />
-      <pointLight position={[60, 40, -75]} intensity={1.06} color={CYBERPUNK_COLORS.CYAN} distance={160} />
-      <pointLight position={[0, 55, -100]} intensity={0.8} color={CYBERPUNK_COLORS.AMBER} distance={200} />
-      <pointLight position={[-100, 30, -120]} intensity={0.8} color={CYBERPUNK_COLORS.CYAN} distance={180} />
-      <pointLight position={[100, 30, -120]} intensity={0.8} color={CYBERPUNK_COLORS.MAGENTA} distance={180} />
+      <pointLight position={[-60, 35, -70]} intensity={CITY_LIGHTS.NEAR_INTENSITY} color={CYBERPUNK_COLORS.MAGENTA} distance={CITY_LIGHTS.NEAR_DISTANCE} />
+      <pointLight position={[60, 40, -75]} intensity={CITY_LIGHTS.NEAR_INTENSITY} color={CYBERPUNK_COLORS.CYAN} distance={CITY_LIGHTS.NEAR_DISTANCE} />
+      <pointLight position={[0, 55, -100]} intensity={CITY_LIGHTS.FAR_INTENSITY} color={CYBERPUNK_COLORS.AMBER} distance={CITY_LIGHTS.CENTER_DISTANCE} />
+      <pointLight position={[-100, 30, -120]} intensity={CITY_LIGHTS.FAR_INTENSITY} color={CYBERPUNK_COLORS.CYAN} distance={CITY_LIGHTS.FAR_DISTANCE} />
+      <pointLight position={[100, 30, -120]} intensity={CITY_LIGHTS.FAR_INTENSITY} color={CYBERPUNK_COLORS.MAGENTA} distance={CITY_LIGHTS.FAR_DISTANCE} />
 
       {/* Ground reflection */}
       <pointLight position={[0, -1, 5]} intensity={0.2} color="#0066ff" distance={25} />

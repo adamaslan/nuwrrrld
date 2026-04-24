@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { usePools } from '../../pools';
 import CyberpunkBuilding from './CyberpunkBuilding';
-import { SCENE_DIMENSIONS } from '@/config/constants';
+import { SCENE_DIMENSIONS, BUILDING_CONFIG, CYBERPUNK_COLORS } from '@/config/constants';
 
 /**
  * Orchestrates all city buildings in the scene.
@@ -28,20 +28,20 @@ export default function CityBuildings() {
     };
 
     for (let i = 0; i < SCENE_DIMENSIONS.LEFT_BUILDINGS; i++) {
-      const height = 75 + randomFn(i) * 150;
-      const width = 3 + randomFn(i + 100) * 4;
-      const depth = 3 + randomFn(i + 200) * 4;
-      const colors = ['#00ffff', '#ff00ff', '#ffaa00', '#00ff88'] as const;
+      const height = BUILDING_CONFIG.SIDE_HEIGHT_BASE + randomFn(i) * BUILDING_CONFIG.SIDE_HEIGHT_RANGE;
+      const width = BUILDING_CONFIG.SIDE_DIM_MIN + randomFn(i + 100) * BUILDING_CONFIG.SIDE_DIM_RANGE;
+      const depth = BUILDING_CONFIG.SIDE_DIM_MIN + randomFn(i + 200) * BUILDING_CONFIG.SIDE_DIM_RANGE;
+      const colors = [CYBERPUNK_COLORS.CYAN, CYBERPUNK_COLORS.MAGENTA, CYBERPUNK_COLORS.AMBER, CYBERPUNK_COLORS.GREEN] as const;
 
       buildings.push({
         position: [
-          -63 - i * 31.5 + randomFn(i + 300) * 10.5,
-          height / 2 - 2,
-          -54 - randomFn(i + 400) * 90,
+          BUILDING_CONFIG.LEFT_X_ORIGIN - i * BUILDING_CONFIG.LEFT_X_STEP + randomFn(i + 300) * BUILDING_CONFIG.LEFT_X_JITTER,
+          height / 2 + BUILDING_CONFIG.Y_GROUND_OFFSET,
+          BUILDING_CONFIG.SIDE_Z_ORIGIN - randomFn(i + 400) * BUILDING_CONFIG.SIDE_Z_RANGE,
         ] as [number, number, number],
         size: [width, height, depth] as [number, number, number],
-        windowColor: colors[Math.floor(randomFn(i + 500) * 4)],
-        hasAntenna: randomFn(i + 600) > 0.6,
+        windowColor: colors[Math.floor(randomFn(i + 500) * colors.length)],
+        hasAntenna: randomFn(i + 600) > BUILDING_CONFIG.ANTENNA_THRESHOLD,
         variantSeed: 5000 + i,
       });
     }
@@ -58,20 +58,20 @@ export default function CityBuildings() {
     };
 
     for (let i = 0; i < SCENE_DIMENSIONS.RIGHT_BUILDINGS; i++) {
-      const height = 75 + randomFn(i) * 150;
-      const width = 3 + randomFn(i + 100) * 4;
-      const depth = 3 + randomFn(i + 200) * 4;
-      const colors = ['#00ffff', '#ff00ff', '#ffaa00', '#00ff88'] as const;
+      const height = BUILDING_CONFIG.SIDE_HEIGHT_BASE + randomFn(i) * BUILDING_CONFIG.SIDE_HEIGHT_RANGE;
+      const width = BUILDING_CONFIG.SIDE_DIM_MIN + randomFn(i + 100) * BUILDING_CONFIG.SIDE_DIM_RANGE;
+      const depth = BUILDING_CONFIG.SIDE_DIM_MIN + randomFn(i + 200) * BUILDING_CONFIG.SIDE_DIM_RANGE;
+      const colors = [CYBERPUNK_COLORS.CYAN, CYBERPUNK_COLORS.MAGENTA, CYBERPUNK_COLORS.AMBER, CYBERPUNK_COLORS.GREEN] as const;
 
       buildings.push({
         position: [
-          63 + i * 31.5 + randomFn(i + 300) * 10.5,
-          height / 2 - 2,
-          -54 - randomFn(i + 400) * 90,
+          -BUILDING_CONFIG.LEFT_X_ORIGIN + i * BUILDING_CONFIG.LEFT_X_STEP + randomFn(i + 300) * BUILDING_CONFIG.LEFT_X_JITTER,
+          height / 2 + BUILDING_CONFIG.Y_GROUND_OFFSET,
+          BUILDING_CONFIG.SIDE_Z_ORIGIN - randomFn(i + 400) * BUILDING_CONFIG.SIDE_Z_RANGE,
         ] as [number, number, number],
         size: [width, height, depth] as [number, number, number],
-        windowColor: colors[Math.floor(randomFn(i + 500) * 4)],
-        hasAntenna: randomFn(i + 600) > 0.6,
+        windowColor: colors[Math.floor(randomFn(i + 500) * colors.length)],
+        hasAntenna: randomFn(i + 600) > BUILDING_CONFIG.ANTENNA_THRESHOLD,
         variantSeed: 6000 + i,
       });
     }
@@ -88,20 +88,20 @@ export default function CityBuildings() {
     };
 
     for (let i = 0; i < SCENE_DIMENSIONS.BACKGROUND_BUILDINGS; i++) {
-      const height = 150 + randomFn(i) * 210;
-      const width = 5 + randomFn(i + 100) * 6;
-      const depth = 5 + randomFn(i + 200) * 6;
-      const colors = ['#00ffff', '#ff00ff', '#ffaa00', '#00ff88'] as const;
+      const height = BUILDING_CONFIG.BG_HEIGHT_BASE + randomFn(i) * BUILDING_CONFIG.BG_HEIGHT_RANGE;
+      const width = BUILDING_CONFIG.BG_DIM_MIN + randomFn(i + 100) * BUILDING_CONFIG.BG_DIM_RANGE;
+      const depth = BUILDING_CONFIG.BG_DIM_MIN + randomFn(i + 200) * BUILDING_CONFIG.BG_DIM_RANGE;
+      const colors = [CYBERPUNK_COLORS.CYAN, CYBERPUNK_COLORS.MAGENTA, CYBERPUNK_COLORS.AMBER, CYBERPUNK_COLORS.GREEN] as const;
 
       buildings.push({
         position: [
-          -157.5 + i * 52.5 + randomFn(i + 300) * 15.75,
-          height / 2 - 2,
-          -157.5 - randomFn(i + 400) * 67.5,
+          BUILDING_CONFIG.BG_X_ORIGIN + i * BUILDING_CONFIG.BG_X_STEP + randomFn(i + 300) * BUILDING_CONFIG.BG_X_JITTER,
+          height / 2 + BUILDING_CONFIG.Y_GROUND_OFFSET,
+          BUILDING_CONFIG.BG_Z_ORIGIN - randomFn(i + 400) * BUILDING_CONFIG.BG_Z_RANGE,
         ] as [number, number, number],
         size: [width, height, depth] as [number, number, number],
-        windowColor: colors[Math.floor(randomFn(i + 500) * 4)],
-        hasAntenna: randomFn(i + 600) > 0.6,
+        windowColor: colors[Math.floor(randomFn(i + 500) * colors.length)],
+        hasAntenna: randomFn(i + 600) > BUILDING_CONFIG.ANTENNA_THRESHOLD,
         variantSeed: 7000 + i,
       });
     }
