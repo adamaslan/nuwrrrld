@@ -81,10 +81,12 @@ export default function Lighting() {
       <pointLight position={[-6, 4, -5]} intensity={LIGHT_INTENSITY.SPOT} color={CYBERPUNK_COLORS.CYAN} distance={20} />
       <pointLight position={[6, 4, -4]} intensity={LIGHT_INTENSITY.SPOT} color={CYBERPUNK_COLORS.GREEN} distance={20} />
 
-      {/* City background atmospheric glow */}
-      <pointLight position={[-35, 25, -40]} intensity={0.8} color={CYBERPUNK_COLORS.MAGENTA} distance={80} />
-      <pointLight position={[35, 30, -45]} intensity={0.8} color={CYBERPUNK_COLORS.CYAN} distance={80} />
-      <pointLight position={[0, 40, -60]} intensity={0.6} color={CYBERPUNK_COLORS.AMBER} distance={100} />
+      {/* City background atmospheric glow — positions and distances scaled to match wider building spread */}
+      <pointLight position={[-60, 35, -70]} intensity={1.06} color={CYBERPUNK_COLORS.MAGENTA} distance={160} />
+      <pointLight position={[60, 40, -75]} intensity={1.06} color={CYBERPUNK_COLORS.CYAN} distance={160} />
+      <pointLight position={[0, 55, -100]} intensity={0.8} color={CYBERPUNK_COLORS.AMBER} distance={200} />
+      <pointLight position={[-100, 30, -120]} intensity={0.8} color={CYBERPUNK_COLORS.CYAN} distance={180} />
+      <pointLight position={[100, 30, -120]} intensity={0.8} color={CYBERPUNK_COLORS.MAGENTA} distance={180} />
 
       {/* Ground reflection */}
       <pointLight position={[0, -1, 5]} intensity={0.2} color="#0066ff" distance={25} />

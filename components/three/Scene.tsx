@@ -20,7 +20,7 @@ export default function Scene() {
         fov: 60,
         near: 0.1,
         far: 800,
-        position: [0, 5, 25],
+        position: [0, 22, 55],
       }}
       style={{
         width: '100%',

@@ -50,9 +50,9 @@ export const RESPONSIVE_SCALE = {
  */
 export const SCENE_DIMENSIONS = {
   /** Ground plane width in units */
-  GROUND_PLANE_WIDTH: 900,
+  GROUND_PLANE_WIDTH: 1350,
   /** Ground plane depth in units */
-  GROUND_PLANE_HEIGHT: 1125,
+  GROUND_PLANE_HEIGHT: 1688,
 
   // Element counts (optimized from initial higher values)
   /** Number of foreground debris particles */

@@ -35,9 +35,9 @@ export default function CityBuildings() {
 
       buildings.push({
         position: [
-          -36 - i * 18 + randomFn(i + 300) * 6,
+          -63 - i * 31.5 + randomFn(i + 300) * 10.5,
           height / 2 - 2,
-          -36 - randomFn(i + 400) * 60,
+          -54 - randomFn(i + 400) * 90,
         ] as [number, number, number],
         size: [width, height, depth] as [number, number, number],
         windowColor: colors[Math.floor(randomFn(i + 500) * 4)],
@@ -65,9 +65,9 @@ export default function CityBuildings() {
 
       buildings.push({
         position: [
-          36 + i * 18 + randomFn(i + 300) * 6,
+          63 + i * 31.5 + randomFn(i + 300) * 10.5,
           height / 2 - 2,
-          -36 - randomFn(i + 400) * 60,
+          -54 - randomFn(i + 400) * 90,
         ] as [number, number, number],
         size: [width, height, depth] as [number, number, number],
         windowColor: colors[Math.floor(randomFn(i + 500) * 4)],
@@ -95,9 +95,9 @@ export default function CityBuildings() {
 
       buildings.push({
         position: [
-          -90 + i * 30 + randomFn(i + 300) * 9,
+          -157.5 + i * 52.5 + randomFn(i + 300) * 15.75,
           height / 2 - 2,
-          -105 - randomFn(i + 400) * 45,
+          -157.5 - randomFn(i + 400) * 67.5,
         ] as [number, number, number],
         size: [width, height, depth] as [number, number, number],
         windowColor: colors[Math.floor(randomFn(i + 500) * 4)],
