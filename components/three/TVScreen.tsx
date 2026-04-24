@@ -727,12 +727,13 @@ function ImageMedia({ path }: { path: string }) {
   );
 }
 
-function ScreenMedia({ type, path }: { type: 'image' | 'video' | 'canvas'; path: string }) {
+function ScreenMedia({ type, path, screenId }: { type: 'image' | 'video' | 'canvas'; path: string; screenId?: number }) {
   if (type === 'video') {
     return <VideoMedia path={path} />;
   }
   if (type === 'canvas') {
-    return <NuWrrrldMorphTexture />;
+    const variant = screenId === 5 ? 'financial' : 'archive';
+    return <NuWrrrldMorphTexture variant={variant} />;
   }
   return <ImageMedia path={path} />;
 }
@@ -938,7 +939,7 @@ export default function TVScreen({ config }: TVScreenProps) {
         onPointerLeave={handlePointerLeave}
       >
         <Suspense fallback={<FallbackMaterial />}>
-          <ScreenMedia type={config.type} path={config.path} />
+          <ScreenMedia type={config.type} path={config.path} screenId={config.id} />
         </Suspense>
       </mesh>
 

@@ -78,7 +78,7 @@ export default function SceneContent() {
           maxDistance={300}
           minPolarAngle={0.2}
           maxPolarAngle={Math.PI - 0.2}
-          target={[0, 0, -5]}
+          target={[0, 10, -5]}
         />
 
         {/* Lighting setup */}

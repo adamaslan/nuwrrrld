@@ -229,17 +229,17 @@ export const BUILDING_CONFIG = {
   /** Z depth range for side buildings */
   SIDE_Z_RANGE: 90,
 
-  // Background layout
-  /** X origin of background building row */
-  BG_X_ORIGIN: -157.5,
-  /** X spacing between background buildings */
-  BG_X_STEP: 52.5,
-  /** X jitter amplitude for background buildings */
-  BG_X_JITTER: 15.75,
+  // Background layout — clustered tightly at far-left end of bridge
+  /** X origin of background building cluster (far-left) */
+  BG_X_ORIGIN: -140,
+  /** X spacing between background buildings (tight cluster) */
+  BG_X_STEP: 16,
+  /** X jitter amplitude for background buildings (minimal) */
+  BG_X_JITTER: 4,
   /** Z origin for background buildings */
-  BG_Z_ORIGIN: -157.5,
-  /** Z depth range for background buildings */
-  BG_Z_RANGE: 67.5,
+  BG_Z_ORIGIN: -65,
+  /** Z depth range for background buildings (shallow cluster) */
+  BG_Z_RANGE: 25,
 
   /** Y offset applied to all buildings (half-height anchor) */
   Y_GROUND_OFFSET: -2,
