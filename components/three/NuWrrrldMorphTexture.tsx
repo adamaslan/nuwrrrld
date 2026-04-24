@@ -111,7 +111,7 @@ export default function NuWrrrldMorphTexture({ variant = 'archive' }: NuWrrrldMo
 
   useEffect(() => {
     return () => {
-      textureRef.current?.dispose();
+      texture.dispose();
     };
   }, [texture]);
 

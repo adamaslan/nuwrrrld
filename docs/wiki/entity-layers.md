@@ -17,7 +17,7 @@ The layer system organizes all scene elements into four explicit Z-position rang
 |------|---------|---------|
 | `components/three/environment/layers/ForegroundLayer.tsx` | −5 to 0 | Debris particles (100), holographic fragments (8 rotating octahedrons) |
 | `components/three/environment/layers/MidgroundLayer.tsx` | −10 to −20 | Mid-depth decorative elements |
-| `components/three/environment/layers/BackgroundLayer.tsx` | −60 to −100 | Distant megastructures, far-field detail |
+| `components/three/environment/layers/BackgroundLayer.tsx` | −180 to −300 | Distant megastructures, far-field detail |
 | `components/three/environment/layers/OppositeLayer.tsx` | +25 to +65 | Reverse-facing backdrop behind the camera |
 
 ## Layer Contents in Detail
@@ -34,7 +34,7 @@ The layer system organizes all scene elements into four explicit Z-position rang
 
 The depth difference between layers is what creates parallax. When the camera pans:
 - ForegroundLayer elements (z near 0) shift the most in screen space
-- BackgroundLayer elements (z −60 to −100) shift barely at all
+- BackgroundLayer elements (z −180 to −300) shift barely at all
 - TV screens (z −3, −6, −10) have subtle relative motion between them
 
 This is entirely geometric — no special parallax shader needed. See [[concept-depth-stratification]].

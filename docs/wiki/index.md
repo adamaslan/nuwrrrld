@@ -116,7 +116,7 @@ Immutable source documents. LLM reads; never modifies.
 | `raw/BOUNDARY_SHIP_ROTATION_CHALLENGES.md` | Capital ship movement and rotation technical fixes |
 | `raw/DETAIL_OPTIMIZATION_THEORIES.md` | Theories for 10x detail and 25% memory reduction |
 | `raw/Typescript-design-guide.md` | 27 TypeScript development guidelines |
-| `raw/design-priniciple.md` | Core development principles (root level) |
+| `raw/design-priniciple.md` | ⚠️ Identical to `Typescript-design-guide.md`; filename contains typo ("priniciple"). Treat as duplicate — reference `Typescript-design-guide.md` instead. |
 
 ---
 

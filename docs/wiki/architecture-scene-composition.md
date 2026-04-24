@@ -31,7 +31,7 @@ app/page.tsx                         ← Next.js App Router entry
                 │   │   ├── Particles (100 debris points)
                 │   │   └── HolographicElements (8 octahedrons)
                 │   ├── MidgroundLayer.tsx    (z: −10 to −20)
-                │   ├── BackgroundLayer.tsx   (z: −60 to −100)
+                │   ├── BackgroundLayer.tsx   (z: −180 to −300)
                 │   ├── OppositeLayer.tsx     (z: +25 to +65)
                 │   ├── Rain.tsx              (800 particles)
                 │   ├── FogLayers.tsx         (3 fog planes)

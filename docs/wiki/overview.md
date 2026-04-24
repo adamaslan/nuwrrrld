@@ -49,7 +49,7 @@ app/page.tsx
         │   └── Puddles.tsx
         ├── TVScreen.tsx × 5     (screens 1–3: focal stack; 4–5: building-mounted)
         │   ├── SideScreen.tsx   (side panel per screen)
-        │   └── NuWrrrldMorphTexture.tsx  (canvas texture for screen 4)
+        │   └── NuWrrrldMorphTexture.tsx  (canvas texture for screens 4 and 5)
         ├── Lighting.tsx         (11+ point/spot lights + 5 city atmospheric glow lights)
         └── PostProcessing.tsx   (Bloom → grain → vignette → chromatic aberration)
 
@@ -78,7 +78,7 @@ GeometryPool / MaterialPool ──► pooled resources ──► Ship + Building
 
 | Area | State | Detail |
 |------|-------|--------|
-| TV Screens (5) | ✅ Stable | Hover/tap, side panels, CRT overlay; screen 4 uses canvas texture |
+| TV Screens (5) | ✅ Stable | Hover/tap, side panels, CRT overlay; screens 4+5 use canvas texture |
 | Ships (16) | ✅ Stable | Horizontal wrap, bobbing, banking, engine lights |
 | Buildings (16) | ✅ Stable | Planet-scale positions, all layout values in BUILDING_CONFIG |
 | Bridge + robots | ✅ Stable | CyberpunkBridge + BridgeRobots in background zone |

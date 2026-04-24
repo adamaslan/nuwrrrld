@@ -57,7 +57,7 @@ LLM-maintained knowledge base for the NUWRRRLD cyberpunk 3D portfolio.
 - **Ships**: 16 total (8 shuttles · 5 transports · 3 freighters)
 - **Buildings**: 16 total (5 left · 5 right · 6 background)
 - **Screens**: 3 (y=68 · y=40 · y=12)
-- **Depth layers**: 4 (foreground −5 to 0 · midground −10 to −20 · background −60 to −100 · opposite +25 to +65)
+- **Depth layers**: 4 (foreground −5 to 0 · midground −10 to −20 · background −180 to −300 · opposite +25 to +65)
 - **Memory before optimization**: 2+ GB
 - **Memory target**: 400–600 MB
 - **FPS target**: 60 stable
