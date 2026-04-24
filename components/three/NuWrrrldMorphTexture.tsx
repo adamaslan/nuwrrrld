@@ -12,28 +12,38 @@ const MODE_DURATION_S = 2.5;
 const LERP_RATE = 0.1;
 const FONT_SIZE = 22;
 
+// Rich chaotic character set — lots of visual noise
+const CHAOS_CHARS =
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789' +
+  '!@#$%^&*()_+-=[]{}|;:<>?,./~`¡¢£¤¥¦§©ª«®°±²³µ¶·¹º»¼½¾¿×÷' +
+  'ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩαβγδεζηθικλμνξοπρστυφχψω' +
+  '░▒▓█▄▀▌▐■□▪▫▬▮▯▰▱◆◇○●◎★☆';
+
 type Mode = 'word' | 'shape' | 'label';
 
 interface ParticleData {
-  char: string;
+  // The letter this particle represents in word/label mode
+  wordChar: string;
+  labelChar: string;
   color: string;
   word: { x: number; y: number };
   shape: { x: number; y: number };
   label: { x: number; y: number };
   cx: number;
   cy: number;
+  // Chaos character cycles independently per particle
+  chaosOffset: number;
+  chaosSpeed: number;
 }
 
 function buildWordPositions(text: string): Array<{ x: number; y: number }> {
   const chars = text.split('');
-  // charWidth scaled to fill ~80% of canvas width
   const charWidth = Math.floor((CANVAS_W * 0.82) / chars.length);
   const totalWidth = chars.length * charWidth;
   const startX = (CANVAS_W - totalWidth) / 2 + charWidth * 0.3;
   const particlesPerChar = Math.floor(CHAR_COUNT / chars.length);
   return Array.from({ length: CHAR_COUNT }, (_, i) => {
     const charIdx = Math.min(Math.floor(i / particlesPerChar), chars.length - 1);
-    // Tight horizontal spread within the character cell; minimal vertical scatter
     const jitterX = (Math.sin(i * 7.3) * 0.5 + 0.5) * charWidth * 0.55;
     const jitterY = (Math.sin(i * 3.7) - 0.5) * FONT_SIZE * 1.2;
     return {
@@ -56,24 +66,45 @@ function buildCirclePositions(): Array<{ x: number; y: number }> {
 function buildParticles(
   wordPositions: Array<{ x: number; y: number }>,
   labelPositions: Array<{ x: number; y: number }>,
+  labelText: string,
 ): ParticleData[] {
   const nuwrrrldChars = 'nuwrrrld'.split('');
+  const labelChars = labelText.split('');
   const circlePositions = buildCirclePositions();
-  return Array.from({ length: CHAR_COUNT }, (_, i) => ({
-    char: nuwrrrldChars[i % nuwrrrldChars.length],
-    color: COLORS[i % COLORS.length],
-    word: wordPositions[i],
-    shape: circlePositions[i],
-    label: labelPositions[i],
-    cx: wordPositions[i].x,
-    cy: wordPositions[i].y,
-  }));
+  const particlesPerWordChar = Math.floor(CHAR_COUNT / nuwrrrldChars.length);
+  const particlesPerLabelChar = Math.floor(CHAR_COUNT / labelChars.length);
+
+  return Array.from({ length: CHAR_COUNT }, (_, i) => {
+    const wordCharIdx = Math.min(Math.floor(i / particlesPerWordChar), nuwrrrldChars.length - 1);
+    const labelCharIdx = Math.min(Math.floor(i / particlesPerLabelChar), labelChars.length - 1);
+    return {
+      wordChar: nuwrrrldChars[wordCharIdx],
+      labelChar: labelChars[labelCharIdx],
+      color: COLORS[i % COLORS.length],
+      word: wordPositions[i],
+      shape: circlePositions[i],
+      label: labelPositions[i],
+      cx: wordPositions[i].x,
+      cy: wordPositions[i].y,
+      // Each particle has its own chaos phase and speed so letters scramble unevenly
+      chaosOffset: Math.floor(Math.random() * CHAOS_CHARS.length),
+      chaosSpeed: 8 + Math.random() * 24,
+    };
+  });
 }
 
 function targetForMode(p: ParticleData, mode: Mode) {
   if (mode === 'word') return p.word;
   if (mode === 'shape') return p.shape;
   return p.label;
+}
+
+function charForMode(p: ParticleData, mode: Mode, elapsed: number): string {
+  if (mode === 'word') return p.wordChar;
+  if (mode === 'label') return p.labelChar;
+  // shape = chaos: each particle cycles through CHAOS_CHARS at its own speed
+  const idx = Math.floor(p.chaosOffset + elapsed * p.chaosSpeed) % CHAOS_CHARS.length;
+  return CHAOS_CHARS[idx];
 }
 
 export interface NuWrrrldMorphTextureProps {
@@ -85,17 +116,17 @@ export default function NuWrrrldMorphTexture({ variant = 'archive' }: NuWrrrldMo
   const textureRef = useRef<THREE.CanvasTexture | null>(null);
   const modeRef = useRef<Mode>('word');
   const modeElapsedRef = useRef<number>(0);
+  const totalElapsedRef = useRef<number>(0);
 
   const labelText = variant === 'financial' ? 'financial' : 'archive';
 
   const wordPositions = useMemo(() => buildWordPositions('nuwrrrld'), []);
   const labelPositions = useMemo(() => buildWordPositions(labelText), [labelText]);
-  const particlesRef = useRef<ParticleData[]>(buildParticles(wordPositions, labelPositions));
+  const particlesRef = useRef<ParticleData[]>(buildParticles(wordPositions, labelPositions, labelText));
 
-  // Rebuild particles when variant changes
   useEffect(() => {
-    particlesRef.current = buildParticles(wordPositions, labelPositions);
-  }, [wordPositions, labelPositions]);
+    particlesRef.current = buildParticles(wordPositions, labelPositions, labelText);
+  }, [wordPositions, labelPositions, labelText]);
 
   const texture = useMemo(() => {
     const canvas = document.createElement('canvas');
@@ -116,6 +147,7 @@ export default function NuWrrrldMorphTexture({ variant = 'archive' }: NuWrrrldMo
   }, [texture]);
 
   useFrame((_, delta) => {
+    totalElapsedRef.current += delta;
     modeElapsedRef.current += delta;
     if (modeElapsedRef.current >= MODE_DURATION_S) {
       modeRef.current =
@@ -146,7 +178,7 @@ export default function NuWrrrldMorphTexture({ variant = 'archive' }: NuWrrrldMo
       p.cx += (target.x - p.cx) * alpha;
       p.cy += (target.y - p.cy) * alpha;
       ctx.fillStyle = p.color;
-      ctx.fillText(p.char, p.cx, p.cy);
+      ctx.fillText(charForMode(p, mode, totalElapsedRef.current), p.cx, p.cy);
     }
 
     tex.needsUpdate = true;
