@@ -50,9 +50,9 @@ export const RESPONSIVE_SCALE = {
  */
 export const SCENE_DIMENSIONS = {
   /** Ground plane width in units */
-  GROUND_PLANE_WIDTH: 900,
+  GROUND_PLANE_WIDTH: 1350,
   /** Ground plane depth in units */
-  GROUND_PLANE_HEIGHT: 1125,
+  GROUND_PLANE_HEIGHT: 1688,
 
   // Element counts (optimized from initial higher values)
   /** Number of foreground debris particles */
@@ -197,6 +197,69 @@ export const BUILDING_CONFIG = {
   ANTENNA_THRESHOLD: 0.6,
   /** Window grid spacing */
   WINDOW_SPACING: 2,
+
+  // Planet-scale layout parameters (expanded scene)
+  /** Side building height base (planet-scale) */
+  SIDE_HEIGHT_BASE: 75,
+  /** Side building height range (planet-scale) */
+  SIDE_HEIGHT_RANGE: 150,
+  /** Background building height base (planet-scale) */
+  BG_HEIGHT_BASE: 150,
+  /** Background building height range (planet-scale) */
+  BG_HEIGHT_RANGE: 210,
+
+  /** Side building width/depth min */
+  SIDE_DIM_MIN: 3,
+  /** Side building width/depth random range */
+  SIDE_DIM_RANGE: 4,
+  /** Background building width/depth min */
+  BG_DIM_MIN: 5,
+  /** Background building width/depth random range */
+  BG_DIM_RANGE: 6,
+
+  // Left/right side layout
+  /** X origin of left building row */
+  LEFT_X_ORIGIN: -63,
+  /** X spacing between left buildings */
+  LEFT_X_STEP: 31.5,
+  /** X jitter amplitude for left buildings */
+  LEFT_X_JITTER: 10.5,
+  /** Z origin for side buildings */
+  SIDE_Z_ORIGIN: -54,
+  /** Z depth range for side buildings */
+  SIDE_Z_RANGE: 90,
+
+  // Background layout
+  /** X origin of background building row */
+  BG_X_ORIGIN: -157.5,
+  /** X spacing between background buildings */
+  BG_X_STEP: 52.5,
+  /** X jitter amplitude for background buildings */
+  BG_X_JITTER: 15.75,
+  /** Z origin for background buildings */
+  BG_Z_ORIGIN: -157.5,
+  /** Z depth range for background buildings */
+  BG_Z_RANGE: 67.5,
+
+  /** Y offset applied to all buildings (half-height anchor) */
+  Y_GROUND_OFFSET: -2,
+} as const;
+
+/**
+ * Atmospheric city glow light parameters.
+ * Tuned for planet-scale building spread.
+ */
+export const CITY_LIGHTS = {
+  /** Intensity for near city glow lights (tuned value) */
+  NEAR_INTENSITY: 1.06,
+  /** Intensity for far atmospheric fill lights */
+  FAR_INTENSITY: 0.8,
+  /** Distance for near city glow lights */
+  NEAR_DISTANCE: 160,
+  /** Distance for far atmospheric lights */
+  FAR_DISTANCE: 180,
+  /** Distance for the central overhead atmospheric light */
+  CENTER_DISTANCE: 200,
 } as const;
 
 /**

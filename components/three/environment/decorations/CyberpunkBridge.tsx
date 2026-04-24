@@ -17,15 +17,15 @@ export interface BridgeConfig {
 }
 
 export const DEFAULT_BRIDGE_CONFIG: BridgeConfig = {
-  position: [0, 2, -45],
+  position: [-38, 2.66, -56],
   rotationY: Math.PI / 6,
-  length: 120,
+  length: 150,
   width: 8,
   towerHeight: 40,
   cableCount: 12,
   accentColor: '#00ffff',
   structureColor: '#1a1a2e',
-  glowIntensity: 0.6,
+  glowIntensity: 0.8,
 };
 
 interface CyberpunkBridgeProps {
