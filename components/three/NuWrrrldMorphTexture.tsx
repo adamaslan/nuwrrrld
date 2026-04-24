@@ -4,64 +4,98 @@ import { useRef, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
-const CHAR_COUNT = 500;
+const CHAR_COUNT = 180;
 const COLORS = ['#FF0055', '#00FFCC', '#FFFF00', '#8800FF'];
-const CHARS = 'nuwrrrld'.split('');
-const CANVAS_W = 512;
-const CANVAS_H = 512;
-const MODE_DURATION_S = 2.0;
-// Lerp factor expressed as a per-second rate: lerp = 1 - (1 - BASE_RATE)^(delta*60)
-const LERP_RATE = 0.08;
+const CANVAS_W = 1024;
+const CANVAS_H = 1024;
+const MODE_DURATION_S = 2.5;
+const LERP_RATE = 0.1;
+const FONT_SIZE = 22;
 
-type Mode = 'word' | 'shape1' | 'shape2';
+type Mode = 'word' | 'shape' | 'label';
 
 interface ParticleData {
   char: string;
   color: string;
   word: { x: number; y: number };
-  shape1: { x: number; y: number };
-  shape2: { x: number; y: number };
+  shape: { x: number; y: number };
+  label: { x: number; y: number };
   cx: number;
   cy: number;
 }
 
-function buildParticles(): ParticleData[] {
+function buildWordPositions(text: string): Array<{ x: number; y: number }> {
+  const chars = text.split('');
+  // charWidth scaled to fill ~80% of canvas width
+  const charWidth = Math.floor((CANVAS_W * 0.82) / chars.length);
+  const totalWidth = chars.length * charWidth;
+  const startX = (CANVAS_W - totalWidth) / 2 + charWidth * 0.3;
+  const particlesPerChar = Math.floor(CHAR_COUNT / chars.length);
   return Array.from({ length: CHAR_COUNT }, (_, i) => {
-    const wordSeg = Math.floor(i / (CHAR_COUNT / 8));
-    const wx = wordSeg * 58 + 30 + (Math.sin(i * 7.3) * 0.5 + 0.5) * 18;
-    const wy = 200 + (Math.sin(i * 3.7) * 0.5 + 0.5) * 110;
-
-    const angle = (i / CHAR_COUNT) * Math.PI * 2;
-    const s1x = CANVAS_W / 2 + Math.cos(angle) * 140;
-    const s1y = CANVAS_H / 2 + Math.sin(angle) * 140;
-
-    const s2x = (Math.sin(i * 13.1) * 0.5 + 0.5) * CANVAS_W;
-    const s2y = (Math.sin(i * 7.9) * 0.5 + 0.5) * CANVAS_H;
-
+    const charIdx = Math.min(Math.floor(i / particlesPerChar), chars.length - 1);
+    // Tight horizontal spread within the character cell; minimal vertical scatter
+    const jitterX = (Math.sin(i * 7.3) * 0.5 + 0.5) * charWidth * 0.55;
+    const jitterY = (Math.sin(i * 3.7) - 0.5) * FONT_SIZE * 1.2;
     return {
-      char: CHARS[i % CHARS.length],
-      color: COLORS[i % COLORS.length],
-      word: { x: wx, y: wy },
-      shape1: { x: s1x, y: s1y },
-      shape2: { x: s2x, y: s2y },
-      cx: wx,
-      cy: wy,
+      x: startX + charIdx * charWidth + jitterX,
+      y: CANVAS_H / 2 + jitterY,
     };
   });
 }
 
-function targetForMode(p: ParticleData, mode: Mode) {
-  if (mode === 'word') return p.word;
-  if (mode === 'shape1') return p.shape1;
-  return p.shape2;
+function buildCirclePositions(): Array<{ x: number; y: number }> {
+  return Array.from({ length: CHAR_COUNT }, (_, i) => {
+    const angle = (i / CHAR_COUNT) * Math.PI * 2;
+    return {
+      x: CANVAS_W / 2 + Math.cos(angle) * 320,
+      y: CANVAS_H / 2 + Math.sin(angle) * 320,
+    };
+  });
 }
 
-export default function NuWrrrldMorphTexture() {
+function buildParticles(
+  wordPositions: Array<{ x: number; y: number }>,
+  labelPositions: Array<{ x: number; y: number }>,
+): ParticleData[] {
+  const nuwrrrldChars = 'nuwrrrld'.split('');
+  const circlePositions = buildCirclePositions();
+  return Array.from({ length: CHAR_COUNT }, (_, i) => ({
+    char: nuwrrrldChars[i % nuwrrrldChars.length],
+    color: COLORS[i % COLORS.length],
+    word: wordPositions[i],
+    shape: circlePositions[i],
+    label: labelPositions[i],
+    cx: wordPositions[i].x,
+    cy: wordPositions[i].y,
+  }));
+}
+
+function targetForMode(p: ParticleData, mode: Mode) {
+  if (mode === 'word') return p.word;
+  if (mode === 'shape') return p.shape;
+  return p.label;
+}
+
+export interface NuWrrrldMorphTextureProps {
+  variant?: 'archive' | 'financial';
+}
+
+export default function NuWrrrldMorphTexture({ variant = 'archive' }: NuWrrrldMorphTextureProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const textureRef = useRef<THREE.CanvasTexture | null>(null);
-  const particlesRef = useRef<ParticleData[]>(buildParticles());
   const modeRef = useRef<Mode>('word');
   const modeElapsedRef = useRef<number>(0);
+
+  const labelText = variant === 'financial' ? 'financial' : 'archive';
+
+  const wordPositions = useMemo(() => buildWordPositions('nuwrrrld'), []);
+  const labelPositions = useMemo(() => buildWordPositions(labelText), [labelText]);
+  const particlesRef = useRef<ParticleData[]>(buildParticles(wordPositions, labelPositions));
+
+  // Rebuild particles when variant changes
+  useEffect(() => {
+    particlesRef.current = buildParticles(wordPositions, labelPositions);
+  }, [wordPositions, labelPositions]);
 
   const texture = useMemo(() => {
     const canvas = document.createElement('canvas');
@@ -75,21 +109,20 @@ export default function NuWrrrldMorphTexture() {
     return tex;
   }, []);
 
-  // Dispose GPU texture on unmount
   useEffect(() => {
     return () => {
-      textureRef.current?.dispose();
+      texture.dispose();
     };
-  }, []);
+  }, [texture]);
 
   useFrame((_, delta) => {
     modeElapsedRef.current += delta;
     if (modeElapsedRef.current >= MODE_DURATION_S) {
       modeRef.current =
         modeRef.current === 'word'
-          ? 'shape1'
-          : modeRef.current === 'shape1'
-          ? 'shape2'
+          ? 'shape'
+          : modeRef.current === 'shape'
+          ? 'label'
           : 'word';
       modeElapsedRef.current = 0;
     }
@@ -101,14 +134,13 @@ export default function NuWrrrldMorphTexture() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Frame-rate independent lerp: same apparent speed at any refresh rate
     const alpha = 1 - Math.pow(1 - LERP_RATE, delta * 60);
 
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
     const mode = modeRef.current;
-    ctx.font = 'bold 11px monospace';
+    ctx.font = `bold ${FONT_SIZE}px monospace`;
     for (const p of particlesRef.current) {
       const target = targetForMode(p, mode);
       p.cx += (target.x - p.cx) * alpha;

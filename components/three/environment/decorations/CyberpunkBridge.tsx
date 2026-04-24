@@ -17,12 +17,12 @@ export interface BridgeConfig {
 }
 
 export const DEFAULT_BRIDGE_CONFIG: BridgeConfig = {
-  position: [-38, 2.66, -56],
-  rotationY: Math.PI / 6,
-  length: 150,
-  width: 8,
-  towerHeight: 40,
-  cableCount: 12,
+  position: [-105, 18, -70],
+  rotationY: 0,
+  length: 70,
+  width: 6,
+  towerHeight: 22,
+  cableCount: 8,
   accentColor: '#00ffff',
   structureColor: '#1a1a2e',
   glowIntensity: 0.8,
