@@ -74,8 +74,8 @@ export default function SceneContent() {
           enablePan={true}
           enableZoom={true}
           enableRotate={true}
-          minDistance={5}
-          maxDistance={300}
+          minDistance={2}
+          maxDistance={800}
           minPolarAngle={0.2}
           maxPolarAngle={Math.PI - 0.2}
           target={[0, 10, -5]}
