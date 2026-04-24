@@ -4,12 +4,13 @@ import { useRef, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
-const CHAR_COUNT = 500;
+const CHAR_COUNT = 180;
 const COLORS = ['#FF0055', '#00FFCC', '#FFFF00', '#8800FF'];
-const CANVAS_W = 512;
-const CANVAS_H = 512;
-const MODE_DURATION_S = 2.0;
-const LERP_RATE = 0.08;
+const CANVAS_W = 1024;
+const CANVAS_H = 1024;
+const MODE_DURATION_S = 2.5;
+const LERP_RATE = 0.1;
+const FONT_SIZE = 22;
 
 type Mode = 'word' | 'shape' | 'label';
 
@@ -25,15 +26,19 @@ interface ParticleData {
 
 function buildWordPositions(text: string): Array<{ x: number; y: number }> {
   const chars = text.split('');
-  const charWidth = 52;
+  // charWidth scaled to fill ~80% of canvas width
+  const charWidth = Math.floor((CANVAS_W * 0.82) / chars.length);
   const totalWidth = chars.length * charWidth;
-  const startX = (CANVAS_W - totalWidth) / 2 + charWidth / 2;
+  const startX = (CANVAS_W - totalWidth) / 2 + charWidth * 0.3;
+  const particlesPerChar = Math.floor(CHAR_COUNT / chars.length);
   return Array.from({ length: CHAR_COUNT }, (_, i) => {
-    const seg = Math.floor(i / (CHAR_COUNT / chars.length));
-    const charIdx = Math.min(seg, chars.length - 1);
+    const charIdx = Math.min(Math.floor(i / particlesPerChar), chars.length - 1);
+    // Tight horizontal spread within the character cell; minimal vertical scatter
+    const jitterX = (Math.sin(i * 7.3) * 0.5 + 0.5) * charWidth * 0.55;
+    const jitterY = (Math.sin(i * 3.7) - 0.5) * FONT_SIZE * 1.2;
     return {
-      x: startX + charIdx * charWidth + (Math.sin(i * 7.3) * 0.5 + 0.5) * 14,
-      y: CANVAS_H / 2 + (Math.sin(i * 3.7) * 0.5 + 0.5) * 80,
+      x: startX + charIdx * charWidth + jitterX,
+      y: CANVAS_H / 2 + jitterY,
     };
   });
 }
@@ -42,8 +47,8 @@ function buildCirclePositions(): Array<{ x: number; y: number }> {
   return Array.from({ length: CHAR_COUNT }, (_, i) => {
     const angle = (i / CHAR_COUNT) * Math.PI * 2;
     return {
-      x: CANVAS_W / 2 + Math.cos(angle) * 160,
-      y: CANVAS_H / 2 + Math.sin(angle) * 160,
+      x: CANVAS_W / 2 + Math.cos(angle) * 320,
+      y: CANVAS_H / 2 + Math.sin(angle) * 320,
     };
   });
 }
@@ -135,7 +140,7 @@ export default function NuWrrrldMorphTexture({ variant = 'archive' }: NuWrrrldMo
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
     const mode = modeRef.current;
-    ctx.font = 'bold 11px monospace';
+    ctx.font = `bold ${FONT_SIZE}px monospace`;
     for (const p of particlesRef.current) {
       const target = targetForMode(p, mode);
       p.cx += (target.x - p.cx) * alpha;
