@@ -64,7 +64,9 @@ function GradientSkyDome() {
         }
 
         void main() {
-          float h = vWorldDir.y; // -1 (nadir) to +1 (zenith)
+          // Re-normalize: varying interpolation shrinks magnitude below 1 on sphere triangles
+          vec3 dir = normalize(vWorldDir);
+          float h = dir.y; // -1 (nadir) to +1 (zenith)
 
           // Three-zone sky gradient
           vec3 sky = mix(colorHorizon, colorMid, smoothstep(-0.05, 0.35, h));
@@ -72,7 +74,7 @@ function GradientSkyDome() {
 
           // Pulsing neon horizon rim — thin band just below equator
           float horizonBand = smoothstep(0.18, 0.0, abs(h + 0.04));
-          float pulse = 0.55 + 0.45 * sin(uTime * 0.7);
+          float pulse = 0.55 + 0.45 * sin(uTime * 4.398); // 2π × 0.7 ≈ 4.398 → 0.7 Hz
           sky += colorGlow * horizonBand * pulse * 0.6;
 
           // Horizontal scanline shimmer (very subtle)
@@ -80,7 +82,7 @@ function GradientSkyDome() {
           sky *= scanline;
 
           // Star field
-          float starGlow = stars(vWorldDir);
+          float starGlow = stars(dir);
           sky += vec3(0.9, 0.85, 1.0) * starGlow;
 
           gl_FragColor = vec4(sky, 1.0);
