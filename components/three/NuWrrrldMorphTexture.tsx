@@ -123,25 +123,35 @@ export default function NuWrrrldMorphTexture({ variant = 'archive' }: NuWrrrldMo
   const wordPositions = useMemo(() => buildWordPositions('nuwrrrld'), []);
   const labelPositions = useMemo(() => buildWordPositions(labelText), [labelText]);
 
-  // Lazy init: useRef initializer runs every render but only the first value is kept.
-  // Using null! + guard means buildParticles only runs once at mount.
+  // Lazy init: guard ensures buildParticles runs only once at mount, not on every render.
   const particlesRef = useRef<ParticleData[]>(null!);
   if (!particlesRef.current) {
     particlesRef.current = buildParticles(wordPositions, labelPositions, labelText);
   }
 
+  // Skip the effect on first mount (particles already built above); only rebuild on variant change.
+  const isFirstMount = useRef(true);
   useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
     const oldParticles = particlesRef.current;
     const newParticles = buildParticles(wordPositions, labelPositions, labelText);
-    // Preserve current cx/cy so particles lerp from where they are rather than snapping to word start
+    // Carry over animated state so particles lerp smoothly rather than snapping or jumping
     for (let i = 0; i < newParticles.length; i++) {
       if (oldParticles[i]) {
         newParticles[i].cx = oldParticles[i].cx;
         newParticles[i].cy = oldParticles[i].cy;
+        newParticles[i].chaosOffset = oldParticles[i].chaosOffset;
+        newParticles[i].chaosSpeed = oldParticles[i].chaosSpeed;
       }
     }
     particlesRef.current = newParticles;
-  }, [wordPositions, labelPositions, labelText]);
+  // labelPositions is the stable memoized value that changes with variant/labelText.
+  // wordPositions never changes ('nuwrrrld' literal). labelText is already encoded in labelPositions.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [labelPositions]);
 
   const texture = useMemo(() => {
     const canvas = document.createElement('canvas');

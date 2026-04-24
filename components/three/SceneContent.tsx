@@ -48,7 +48,7 @@ function GradientSkyDome() {
   }, []);
 
   return (
-    <mesh ref={meshRef} scale={[600, 600, 600]}>
+    <mesh ref={meshRef} scale={[1200, 1200, 1200]}>
       <sphereGeometry args={[1, 32, 32]} />
       <primitive object={gradientMaterial} attach="material" />
     </mesh>
